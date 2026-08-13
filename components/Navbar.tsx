@@ -12,15 +12,15 @@ export default function Navbar() {
 
   return (
     <>
-      {/* 1. HEADER DESKTOP */}
-      <header className="hidden md:block fixed top-0 left-0 w-full z-50 bg-black/40 backdrop-blur-md border-b border-green/20">
-        <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
+      {/* 1. HEADER DESKTOP (Dikecilkan ke h-16 & transparansi ditingkatkan ke bg-black/80) */}
+      <header className="hidden md:block fixed top-0 left-0 w-full z-50 bg-black/80 backdrop-blur-md border-b border-green/20">
+        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="hover:opacity-80 transition">
             <Image 
               src="/images/logo.png" 
               alt="Logo" 
-              width={48} 
-              height={48} 
+              width={40} 
+              height={40} 
               className="rounded-full border-2 border-green shadow-[0_0_15px_rgba(74,222,128,0.6)]" 
             />
           </Link>
@@ -35,7 +35,7 @@ export default function Navbar() {
           <div>
             <Link 
               href="/upgrade" 
-              className="px-6 py-2.5 bg-black/80 border border-green text-green font-tech text-sm tracking-wider hover:bg-green hover:text-black transition-all box-aura uppercase shadow-[0_0_15px_rgba(74,222,128,0.3)]"
+              className="px-5 py-2 bg-black/90 border border-green text-green font-tech text-xs tracking-wider hover:bg-green hover:text-black transition-all box-aura uppercase shadow-[0_0_15px_rgba(74,222,128,0.3)]"
             >
               CONNECT WALLET
             </Link>
@@ -44,28 +44,28 @@ export default function Navbar() {
       </header>
 
 
-      {/* 2. HEADER MOBILE (Atas) */}
-      <header className="md:hidden fixed top-0 left-0 w-full z-50 bg-black/80 backdrop-blur-md border-b border-green/20 px-4 h-16 flex items-center justify-between">
+      {/* 2. HEADER MOBILE (Dikecilkan ke h-14 & transparansi ditingkatkan ke bg-black/90) */}
+      <header className="md:hidden fixed top-0 left-0 w-full z-50 bg-black/90 backdrop-blur-md border-b border-green/20 px-4 h-14 flex items-center justify-between">
         <Link href="/" className="hover:opacity-80 transition">
           <Image 
             src="/images/logo.png" 
             alt="Logo" 
-            width={40} 
-            height={40} 
+            width={34} 
+            height={34} 
             className="rounded-full border border-green shadow-[0_0_10px_rgba(74,222,128,0.5)]" 
           />
         </Link>
         <Link 
           href="/upgrade" 
-          className="px-3 py-1.5 bg-black/80 border border-green text-green font-tech text-[10px] tracking-wider uppercase shadow-[0_0_10px_rgba(74,222,128,0.2)]"
+          className="px-3 py-1 bg-black/90 border border-green text-green font-tech text-[10px] tracking-wider uppercase shadow-[0_0_10px_rgba(74,222,128,0.2)]"
         >
           CONNECT
         </Link>
       </header>
 
 
-      {/* 3. BOTTOM NAVIGATION BAR MOBILE (Dinamis Berdasarkan Halaman Aktif) */}
-      <nav className="md:hidden fixed bottom-0 left-0 w-full z-50 bg-black/95 backdrop-blur-lg border-t border-green/30 px-4 py-2.5 flex items-center justify-around font-tech text-[10px] tracking-wider shadow-[0_-5px_20px_rgba(0,0,0,0.8)]">
+      {/* 3. BOTTOM NAVIGATION BAR MOBILE (Transparansi ditingkatkan ke bg-black/95) */}
+      <nav className="md:hidden fixed bottom-0 left-0 w-full z-50 bg-black/95 backdrop-blur-lg border-t border-green/30 px-4 py-2 flex items-center justify-around font-tech text-[10px] tracking-wider shadow-[0_-5px_20px_rgba(0,0,0,0.8)]">
         
         {/* Home */}
         <Link href="/" className={`flex flex-col items-center transition group py-1 ${isActive('/') ? 'text-green font-bold' : 'text-gray-400 hover:text-green'}`}>

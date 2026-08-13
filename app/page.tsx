@@ -1,7 +1,7 @@
 import SectionTitle from "@/components/SectionTitle";
 import AntidoteCard from "@/components/AntidoteCard";
 import ScrollReveal from "@/components/ScrollReveal";
-import { MOCK_NFTS, MOCK_STATS } from "@/lib/mockData";
+import { MOCK_NFTS } from "@/lib/mockData";
 import Link from "next/link";
 
 export default function Home() {
@@ -11,24 +11,17 @@ export default function Home() {
     <div className="flex flex-col items-center w-full">
       {/* Hero Section */}
       <section className="w-full h-screen flex flex-col items-center justify-center px-4 relative overflow-hidden">
-        <div className="absolute inset-0 z-0 pointer-events-none">
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-deep/80 to-deep"></div>
-        </div>
-
-        {/* Konten Teks Hero (Ditambahkan mt-12 atau mt-16 agar posisinya turun di HP) */}
+        
+        {/* Konten Teks Hero */}
         <ScrollReveal className="text-center max-w-4xl mx-auto z-20 flex flex-col items-center gap-4 sm:gap-6 mt-16 sm:mt-0">
-          
-          {/* Judul: Mengecil di HP (text-5xl), kembali besar di laptop (sm:text-7xl md:text-[5rem]) */}
           <h1 className="font-bangers text-4xl sm:text-7xl md:text-[5rem] text-green tracking-wider text-aura leading-none drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)]">
             PRAY FOR PLAGUES
           </h1>
           
-          {/* Subteks: Ukuran disesuaikan agar pas di layar kecil */}
           <p className="font-tech text-[8px] sm:text-xs md:text-sm tracking-[0.2em] sm:tracking-[0.3em] uppercase max-w-2xl px-4 sm:px-6 py-2 bg-black/50 border border-green/20 backdrop-blur-sm box-aura">
             THE PLAGUE HAS ARRIVED ON <span className="text-green font-bold">ROBINHOOD</span> CHAIN.
           </p>
 
-          {/* Tombol: Ukuran teks dan padding disesuaikan agar tidak terlalu memakan tempat di HP */}
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mt-4 w-full sm:w-auto px-6 sm:px-0">
             <Link 
               href="/upgrade"
@@ -46,19 +39,7 @@ export default function Home() {
         </ScrollReveal>
       </section>
 
-      {/* Stats Section dengan Efek Scroll */}
-      <ScrollReveal className="w-full max-w-6xl mx-auto px-4 py-16 border-t border-b border-green/10 bg-black/40 backdrop-blur-sm">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-          {MOCK_STATS.map((stat, idx) => (
-            <div key={idx} className="flex flex-col items-center text-center space-y-2">
-              <span className="font-tech text-3xl md:text-5xl text-white">{stat.value}</span>
-              <span className="font-tech text-xs md:text-sm text-gray tracking-[0.2em] uppercase">{stat.label}</span>
-            </div>
-          ))}
-        </div>
-      </ScrollReveal>
-
-      {/* Lab Preview Section dengan Efek Scroll & Kartu Berurutan */}
+      {/* Lab Preview Section */}
       <section className="w-full max-w-7xl mx-auto px-4 py-24">
         <ScrollReveal>
           <SectionTitle title="ANTIDOTE LAB" subtitle="UPGRADE. MUTATE. SURVIVE." />
