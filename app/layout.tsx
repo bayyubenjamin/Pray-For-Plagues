@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Share_Tech_Mono } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
+import BackgroundMusic from '@/components/BackgroundMusic';
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackgroundEffects from "@/components/BackgroundEffects";
@@ -33,12 +34,18 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${plagueFont.variable} ${shareTechMono.variable} font-tech antialiased min-h-screen flex flex-col relative`}>
+      <body className={`${plagueFont.variable} ${shareTechMono.variable} font-tech antialiased min-h-screen flex flex-col relative bg-black text-white`}>
         <BackgroundEffects />
+        
+        {/* Navbar melayang di atas */}
         <Navbar />
-        <main className="flex-grow z-10 relative pb-20">
+        
+        {/* Tambahkan pt-24 atau pt-28 di sini agar konten tidak tertutup navbar */}
+        <main className="flex-grow z-10 relative pt-24 pb-20">
           {children}
+          <BackgroundMusic />
         </main>
+        
         <Footer />
       </body>
     </html>

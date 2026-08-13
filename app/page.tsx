@@ -1,9 +1,8 @@
 import SectionTitle from "@/components/SectionTitle";
 import AntidoteCard from "@/components/AntidoteCard";
-import ScrollReveal from "@/components/ScrollReveal"; // IMPORT INI
+import ScrollReveal from "@/components/ScrollReveal";
 import { MOCK_NFTS, MOCK_STATS } from "@/lib/mockData";
 import Link from "next/link";
-import Image from "next/image";
 
 export default function Home() {
   const previewNFTs = MOCK_NFTS.slice(0, 5);
@@ -12,18 +11,12 @@ export default function Home() {
     <div className="flex flex-col items-center w-full">
       {/* Hero Section */}
       <section className="w-full h-screen flex flex-col items-center justify-center px-4 relative overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          <Image 
-            src="/images/hero-hooded.png"
-            alt="Plague Hero"
-            fill
-            priority
-            className="object-cover object-center opacity-60 animate-pulse duration-[10000ms]"
-          />
+        {/* HANYA GRADASI GELAP (Video background sudah di-handle global oleh BackgroundEffects di layout.tsx) */}
+        <div className="absolute inset-0 z-0 pointer-events-none">
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-deep/80 to-deep"></div>
         </div>
 
-        {/* Konten Teks Hero (Animasi Masuk Saat Pertama Kali Dimuat) */}
+        {/* Konten Teks Hero */}
         <ScrollReveal className="text-center max-w-4xl mx-auto z-20 flex flex-col items-center gap-6">
           <h1 className="font-bangers text-6xl sm:text-7xl md:text-[5rem] text-green tracking-wider text-aura leading-none drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)]">
             PRAY FOR PLAGUES
@@ -70,7 +63,7 @@ export default function Home() {
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mt-12">
           {previewNFTs.map((nft, index) => (
-            <ScrollReveal key={nft.id} delay={index * 150}> {/* Efek stagger/berjenjang */}
+            <ScrollReveal key={nft.id} delay={index * 150}>
               <AntidoteCard nft={nft} actionLabel="VIEW DETAILS" />
             </ScrollReveal>
           ))}

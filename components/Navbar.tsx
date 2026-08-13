@@ -1,91 +1,96 @@
-"use client";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import ConnectWallet from "./ConnectWallet";
-import { Menu, X } from "lucide-react";
-import { useState } from "react";
-import { cn } from "@/lib/utils";
+'use client';
 
-const NAV_LINKS = [
-  { href: "/", label: "HOME" },
-  { href: "/inventory", label: "INVENTORY" },
-  { href: "/upgrade", label: "UPGRADE" },
-  { href: "/leaderboard", label: "LEADERBOARD" },
-];
+import { useState } from 'react';
+import Link from 'next/link';
 
 export default function Navbar() {
-  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-green/20 bg-deep/90 backdrop-blur-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
-          
-          {/* Logo */}
-          <Link href="/" className="flex-shrink-0 flex items-center gap-3 group">
-            <span className="font-bangers text-3xl text-green group-hover:text-green-bright transition-colors text-glow tracking-wide">
-              PRAY FOR PLAGUES
-            </span>
+    <header className="fixed top-0 left-0 w-full z-50 bg-black/40 backdrop-blur-md border-b border-green/20">
+      <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
+        
+        {/* Logo */}
+        <Link href="/" className="font-bangers text-3xl text-green tracking-wider hover:opacity-80 transition">
+          PRAY FOR PLAGUES
+        </Link>
+
+        {/* Desktop Menu */}
+        <nav className="hidden md:flex items-center gap-8 font-tech text-sm tracking-widest text-white">
+          <Link href="/" className="hover:text-green transition-colors">HOME</Link>
+          <Link href="/inventory" className="hover:text-green transition-colors">INVENTORY</Link>
+          <Link href="/upgrade" className="hover:text-green transition-colors">UPGRADE</Link>
+          <Link href="/leaderboard" className="hover:text-green transition-colors">LEADERBOARD</Link>
+        </nav>
+
+        {/* Connect Wallet Button (Desktop) */}
+        <div className="hidden md:block">
+          <Link 
+            href="/upgrade" 
+            className="px-6 py-2.5 bg-black/80 border border-green text-green font-tech text-sm tracking-wider hover:bg-green hover:text-black transition-all box-aura uppercase"
+          >
+            CONNECT WALLET
           </Link>
-
-{/* Desktop Nav */}
-          <div className="hidden md:flex items-center space-x-8">
-            {NAV_LINKS.map((link) => (
-              <Link 
-                key={link.href} 
-                href={link.href}
-                className={cn(
-                  "text-sm tracking-widest transition-all duration-300",
-                  pathname === link.href 
-                    ? "text-green text-aura font-bold" // Active state dengan aura
-                    : "text-gray hover:text-green text-aura" // Hover state dengan aura
-                )}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
-
-          <div className="hidden md:flex items-center">
-            <ConnectWallet />
-          </div>
-
-          {/* Mobile menu button */}
-          <div className="md:hidden flex items-center">
-            <button 
-              onClick={() => setIsOpen(!isOpen)}
-              className="text-green hover:text-green-bright p-2"
-            >
-              {isOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-          </div>
         </div>
+
+        {/* Mobile Menu Button */}
+        <button 
+          onClick={() => setIsOpen(!isOpen)}
+          className="md:hidden text-green focus:outline-none"
+          aria-label="Toggle Menu"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {isOpen ? (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            )}
+          </svg>
+        </button>
       </div>
 
-      {/* Mobile Nav */}
+      {/* Mobile Nav Menu Dropdown */}
       {isOpen && (
-        <div className="md:hidden bg-deep border-b border-green/20">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setIsOpen(false)}
-                className={cn(
-                  "block px-3 py-2 text-base font-medium tracking-wider",
-                  pathname === link.href ? "text-green bg-darkGreen" : "text-gray hover:text-green hover:bg-darkGreen/50"
-                )}
-              >
-                {link.label}
-              </Link>
-            ))}
-            <div className="px-3 py-4">
-              <ConnectWallet />
-            </div>
+        <div className="md:hidden bg-black/95 border-b border-green/20 px-4 pt-4 pb-6 flex flex-col gap-4 font-tech tracking-widest">
+          <Link 
+            href="/" 
+            onClick={() => setIsOpen(false)}
+            className="text-white hover:text-green transition-colors py-2"
+          >
+            HOME
+          </Link>
+          <Link 
+            href="/inventory" 
+            onClick={() => setIsOpen(false)}
+            className="text-white hover:text-green transition-colors py-2"
+          >
+            INVENTORY
+          </Link>
+          <Link 
+            href="/upgrade" 
+            onClick={() => setIsOpen(false)}
+            className="text-white hover:text-green transition-colors py-2"
+          >
+            UPGRADE
+          </Link>
+          <Link 
+            href="/leaderboard" 
+            onClick={() => setIsOpen(false)}
+            className="text-white hover:text-green transition-colors py-2"
+          >
+            LEADERBOARD
+          </Link>
+          <div className="pt-2">
+            <Link 
+              href="/upgrade" 
+              onClick={() => setIsOpen(false)}
+              className="w-full block text-center px-6 py-3 bg-green text-black font-tech text-sm tracking-wider uppercase font-bold"
+            >
+              CONNECT WALLET
+            </Link>
           </div>
         </div>
       )}
-    </nav>
+    </header>
   );
 }
