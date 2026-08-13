@@ -1,16 +1,20 @@
 import type { Metadata } from "next";
-import { Bangers, Share_Tech_Mono } from "next/font/google";
+import { Share_Tech_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackgroundEffects from "@/components/BackgroundEffects";
 
-const bangers = Bangers({ 
-  weight: '400',
-  subsets: ["latin"],
-  variable: '--font-bangers',
+// 1. Panggil font custom yang sudah di-download
+const plagueFont = localFont({
+  src: './fonts/plague.otf',
+  // Trik: Kita tetap menggunakan nama variabel '--font-bangers' 
+  // agar kita tidak perlu repot mengubah file tailwind.config.ts
+  variable: '--font-bangers', 
 });
 
+// 2. Font sekunder tetap menggunakan Google Fonts
 const shareTechMono = Share_Tech_Mono({
   weight: '400',
   subsets: ["latin"],
@@ -29,7 +33,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${bangers.variable} ${shareTechMono.variable} font-tech antialiased min-h-screen flex flex-col relative`}>
+      <body className={`${plagueFont.variable} ${shareTechMono.variable} font-tech antialiased min-h-screen flex flex-col relative`}>
         <BackgroundEffects />
         <Navbar />
         <main className="flex-grow z-10 relative pb-20">
