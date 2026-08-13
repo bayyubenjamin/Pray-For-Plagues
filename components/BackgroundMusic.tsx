@@ -5,52 +5,45 @@ import { useState, useRef, useEffect } from 'react';
 export default function BackgroundMusic() {
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const hasStarted = useRef(false);
 
   useEffect(() => {
-    // Fungsi untuk mencoba memutar musik pada interaksi pertama pengguna (klik/tap)
-    const handleFirstInteraction = () => {
-      if (audioRef.current && !isPlaying) {
+    const startAudio = () => {
+      if (audioRef.current && !hasStarted.current) {
         audioRef.current.play()
           .then(() => {
             setIsPlaying(true);
-            // Hapus event listener setelah musik berhasil berputar
-            window.removeEventListener('click', handleFirstInteraction);
-            window.removeEventListener('keydown', handleFirstInteraction);
+            hasStarted.current = true;
           })
-          .catch((error) => {
-            console.log("Autoplay diblokir browser:", error);
-          });
+          .catch((err) => console.log("Menunggu interaksi...", err));
       }
     };
 
-    window.addEventListener('click', handleFirstInteraction);
-    window.addEventListener('keydown', handleFirstInteraction);
-
-    return () => {
-      window.removeEventListener('click', handleFirstInteraction);
-      window.removeEventListener('keydown', handleFirstInteraction);
-    };
-  }, [isPlaying]);
+    window.addEventListener('click', startAudio);
+    return () => window.removeEventListener('click', startAudio);
+  }, []);
 
   const togglePlay = () => {
-    if (isPlaying) {
-      audioRef.current?.pause();
-    } else {
-      audioRef.current?.play();
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        audioRef.current.play();
+        setIsPlaying(true);
+      }
     }
-    setIsPlaying(!isPlaying);
   };
 
   return (
-    <div className="fixed bottom-4 right-4 z-50">
-      {/* Tambahkan atribut preload="auto" */}
-      <audio ref={audioRef} src="/audio/music.mp3" preload="auto" loop />
+    <div className="fixed top-20 md:top-24 right-4 z-[9999]">
+      <audio ref={audioRef} src="/audio/music.mp3" loop />
       
       <button 
         onClick={togglePlay}
-        className="px-4 py-2 bg-black/80 border border-green/40 text-green font-tech text-xs tracking-wider rounded-full shadow-lg hover:bg-green hover:text-black transition uppercase backdrop-blur-md"
+        className="w-8 h-8 flex items-center justify-center bg-black/80 border border-green text-green rounded-full shadow-[0_0_15px_rgba(74,222,128,0.6)] hover:bg-green hover:text-black transition backdrop-blur-lg"
       >
-        {isPlaying ? '🔊 MUSIC: ON' : '🔇 MUSIC: OFF'}
+        <span className="text-sm">{isPlaying ? '🔊' : '🔇'}</span>
       </button>
     </div>
   );

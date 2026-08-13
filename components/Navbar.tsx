@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import Image from 'next/image';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -14,8 +15,14 @@ export default function Navbar() {
       {/* 1. HEADER DESKTOP */}
       <header className="hidden md:block fixed top-0 left-0 w-full z-50 bg-black/40 backdrop-blur-md border-b border-green/20">
         <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
-          <Link href="/" className="font-bangers text-3xl text-green tracking-wider hover:opacity-80 transition drop-shadow-[0_0_10px_rgba(74,222,128,0.5)]">
-            PRAY FOR PLAGUES
+          <Link href="/" className="hover:opacity-80 transition">
+            <Image 
+              src="/images/logo.png" 
+              alt="Logo" 
+              width={48} 
+              height={48} 
+              className="rounded-full border-2 border-green shadow-[0_0_15px_rgba(74,222,128,0.6)]" 
+            />
           </Link>
 
           <nav className="flex items-center gap-8 font-tech text-sm tracking-widest">
@@ -39,8 +46,14 @@ export default function Navbar() {
 
       {/* 2. HEADER MOBILE (Atas) */}
       <header className="md:hidden fixed top-0 left-0 w-full z-50 bg-black/80 backdrop-blur-md border-b border-green/20 px-4 h-16 flex items-center justify-between">
-        <Link href="/" className="font-bangers text-2xl text-green tracking-wider drop-shadow-[0_0_8px_rgba(74,222,128,0.5)]">
-          PRAY FOR PLAGUES
+        <Link href="/" className="hover:opacity-80 transition">
+          <Image 
+            src="/images/logo.png" 
+            alt="Logo" 
+            width={40} 
+            height={40} 
+            className="rounded-full border border-green shadow-[0_0_10px_rgba(74,222,128,0.5)]" 
+          />
         </Link>
         <Link 
           href="/upgrade" 
