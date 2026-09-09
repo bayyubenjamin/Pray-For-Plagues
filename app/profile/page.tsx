@@ -14,6 +14,7 @@ export default function ProfilePage() {
   const [player, setPlayer] = useState<PlayerState>({ completed: [], points: 0 });
   const [xMsg, setXMsg] = useState("");
   const [lockMsg, setLockMsg] = useState("");
+  const [rank, setRank] = useState<number | null>(null);
 
   useEffect(() => {
     setPlayer(loadPlayer());
@@ -32,6 +33,12 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const handle = loadPlayer().xHandle;
+    if (handle) {
+      fetch(`/api/rank?x=${encodeURIComponent(handle)}`)
+        .then((r) => r.json())
+        .then((json) => setRank(json.rank ?? null))
+        .catch(() => {});
+    }
     if (!handle && !address) return;
     const q = new URLSearchParams();
     if (handle) q.set("x", handle);
@@ -60,6 +67,10 @@ export default function ProfilePage() {
             <p className="font-tech text-[10px] tracking-widest text-gray">POINTS</p>
             <p className="font-bangers text-4xl text-green text-aura">{player.points}</p>
           </div>
+          <div>
+            <p className="font-tech text-[10px] tracking-widest text-gray">RANK</p>
+            <p className="font-bangers text-4xl text-green text-aura">{rank ?? "—"}</p>
+          </div>
         </div>
 
         <div>
@@ -83,9 +94,6 @@ export default function ProfilePage() {
 
         <div>
           <p className="font-tech text-[10px] tracking-widest text-gray mb-3">WALLET CONNECT (OPTIONAL NOW)</p>
-          <p className="font-tech text-[10px] text-gray tracking-widest mb-3">
-            AFTER WAITLIST, THIS X CAN ONLY USE THE PASTED WALLET.
-          </p>
           <ConnectWallet />
           {isConnected && address && (
             <p className="mt-2 font-tech text-[10px] text-green tracking-widest">{formatAddress(address)}</p>
