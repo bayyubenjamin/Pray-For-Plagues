@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { completeTask } from "@/lib/points";
-import { loadRef } from "@/lib/referral";
+import { captureRefFromUrl } from "@/lib/referral";
 
 const WALLET_RE = /^0x[a-fA-F0-9]{40}$/;
 
@@ -14,7 +14,7 @@ export default function WaitlistForm({ xHandle }: { xHandle?: string | null }) {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    setRefCode(loadRef());
+    setRefCode(captureRefFromUrl());
   }, []);
 
   const ready = Boolean(xHandle);
@@ -42,7 +42,7 @@ export default function WaitlistForm({ xHandle }: { xHandle?: string | null }) {
           email: email.trim().toLowerCase(),
           wallet: w,
           xHandle,
-          referredBy: refCode.replace(/^@/, "").trim().toLowerCase() || undefined,
+          referredBy: (refCode || captureRefFromUrl()).replace(/^@/, "").trim().toLowerCase() || undefined,
         }),
       });
       const json = await res.json();

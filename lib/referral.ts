@@ -11,3 +11,10 @@ export function loadRef() {
   if (typeof window === "undefined") return "";
   return localStorage.getItem(REF_KEY) || "";
 }
+
+export function captureRefFromUrl() {
+  if (typeof window === "undefined") return loadRef();
+  const ref = new URLSearchParams(window.location.search).get("ref");
+  if (ref) saveRef(ref);
+  return loadRef();
+}
