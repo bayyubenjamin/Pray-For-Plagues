@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import { isNhostConfigured } from "@/lib/nhost";
 import { nhostAdminRequest } from "@/lib/nhost-server";
+import { REFERRAL_POINTS } from "@/lib/referral";
 
 const INSERT = `
   mutation InsertWaitlist(
     $email: String!,
     $wallet: String!,
     $x_handle: String!,
+    $referred_by: String,
     $source: String!,
     $collection: String!
   ) {
@@ -15,12 +17,14 @@ const INSERT = `
         email: $email,
         wallet: $wallet,
         x_handle: $x_handle,
+        referred_by: $referred_by,
+        points: 150,
         source: $source,
         collection: $collection,
         status: "pending"
       }
     ) {
-      id wallet email x_handle status
+      id wallet email x_handle referred_by
     }
   }
 `;
@@ -35,6 +39,22 @@ const FIND = `
     }
     by_email: waitlist(where: { email: { _ilike: $email } }, limit: 1) {
       id wallet email x_handle
+    }
+  }
+`;
+
+const FIND_REF = `
+  query FindRef($x: String!) {
+    waitlist(where: { x_handle: { _ilike: $x } }, limit: 1) {
+      x_handle points
+    }
+  }
+`;
+
+const AWARD = `
+  mutation AwardRef($x: String!, $pts: Int!) {
+    update_waitlist(where: { x_handle: { _ilike: $x } }, _inc: { points: $pts }) {
+      affected_rows
     }
   }
 `;
@@ -65,50 +85,56 @@ export async function POST(req: Request) {
     const email = String(body.email ?? "").trim().toLowerCase();
     const wallet = normalizeWallet(String(body.wallet ?? ""));
     const xHandle = String(body.xHandle ?? "").replace(/^@/, "").trim().toLowerCase();
+    const referredBy = String(body.referredBy ?? "").replace(/^@/, "").trim().toLowerCase();
 
-    if (!xHandle) {
-      return NextResponse.json({ error: "Connect X first" }, { status: 400 });
-    }
-    if (!isAddress(wallet)) {
-      return NextResponse.json({ error: "Paste a valid wallet 0x..." }, { status: 400 });
-    }
+    if (!xHandle) return NextResponse.json({ error: "Connect X first" }, { status: 400 });
+    if (!isAddress(wallet)) return NextResponse.json({ error: "Paste a valid wallet 0x..." }, { status: 400 });
     if (!email.includes("@") || !email.includes(".")) {
       return NextResponse.json({ error: "Invalid email" }, { status: 400 });
     }
     if (!isNhostConfigured) {
       return NextResponse.json({ error: "Nhost backend is not configured" }, { status: 503 });
     }
+    if (referredBy && referredBy === xHandle) {
+      return NextResponse.json({ error: "Cannot refer yourself" }, { status: 400 });
+    }
 
     const existing = await lookup(xHandle, wallet, email);
-
     if (existing.by_wallet[0]) {
-      return NextResponse.json(
-        { error: "Wallet already used", field: "wallet", taken: true },
-        { status: 409 }
-      );
+      return NextResponse.json({ error: "Wallet already used", field: "wallet", taken: true }, { status: 409 });
     }
     if (existing.by_x[0]) {
-      return NextResponse.json(
-        { error: "This X account already joined", field: "x", taken: true },
-        { status: 409 }
-      );
+      return NextResponse.json({ error: "This X account already joined", field: "x", taken: true }, { status: 409 });
     }
     if (existing.by_email[0]) {
-      return NextResponse.json(
-        { error: "This email already joined", field: "email", taken: true },
-        { status: 409 }
-      );
+      return NextResponse.json({ error: "This email already joined", field: "email", taken: true }, { status: 409 });
+    }
+
+    let validRef: string | null = null;
+    if (referredBy) {
+      const ref = await nhostAdminRequest<{ waitlist: { x_handle: string }[] }>(FIND_REF, { x: referredBy });
+      if (ref.waitlist[0]) validRef = ref.waitlist[0].x_handle.toLowerCase();
     }
 
     const data = await nhostAdminRequest<{ insert_waitlist_one: { id: string } }>(INSERT, {
       email,
       wallet,
       x_handle: xHandle,
+      referred_by: validRef,
       source: "site",
       collection: "pray-for-plagues",
     });
 
-    return NextResponse.json({ ok: true, stored: "nhost", id: data.insert_waitlist_one?.id });
+    if (validRef) {
+      await nhostAdminRequest(AWARD, { x: validRef, pts: REFERRAL_POINTS });
+    }
+
+    return NextResponse.json({
+      ok: true,
+      stored: "nhost",
+      id: data.insert_waitlist_one?.id,
+      referralAwarded: Boolean(validRef),
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Waitlist failed";
     if (/unique|uniqueness|constraint/i.test(message)) {
@@ -130,20 +156,15 @@ export async function GET(req: Request) {
 
   try {
     const existing = await lookup(xHandle, wallet, email);
-    const walletTaken = Boolean(existing.by_wallet[0]);
-    const row = existing.by_x[0] || existing.by_wallet[0] || existing.by_email[0] || null;
     return NextResponse.json({
       ok: true,
-      walletTaken,
+      walletTaken: Boolean(existing.by_wallet[0]),
       xTaken: Boolean(existing.by_x[0]),
       emailTaken: Boolean(existing.by_email[0]),
       lockedWallet: existing.by_x[0]?.wallet ?? existing.by_wallet[0]?.wallet ?? null,
-      entry: row,
+      entry: existing.by_x[0] || existing.by_wallet[0] || existing.by_email[0] || null,
     });
   } catch (err) {
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Lookup failed" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Lookup failed" }, { status: 500 });
   }
 }

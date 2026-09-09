@@ -1,31 +1,23 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { completeTask } from "@/lib/points";
+import { loadRef } from "@/lib/referral";
 
 const WALLET_RE = /^0x[a-fA-F0-9]{40}$/;
 
 export default function WaitlistForm({ xHandle }: { xHandle?: string | null }) {
   const [wallet, setWallet] = useState("");
   const [email, setEmail] = useState("");
+  const [refCode, setRefCode] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [message, setMessage] = useState("");
 
-  const ready = Boolean(xHandle);
+  useEffect(() => {
+    setRefCode(loadRef());
+  }, []);
 
-  const checkWallet = async (value: string) => {
-    const w = value.trim().toLowerCase();
-    if (!WALLET_RE.test(w)) return;
-    const res = await fetch(`/api/waitlist?wallet=${encodeURIComponent(w)}`);
-    const json = await res.json();
-    if (json.walletTaken) {
-      setStatus("error");
-      setMessage("WALLET ALREADY USED");
-    } else if (message === "WALLET ALREADY USED") {
-      setStatus("idle");
-      setMessage("");
-    }
-  };
+  const ready = Boolean(xHandle);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -43,22 +35,25 @@ export default function WaitlistForm({ xHandle }: { xHandle?: string | null }) {
     setStatus("loading");
     setMessage("");
     try {
-      const check = await fetch(`/api/waitlist?wallet=${encodeURIComponent(w)}&x=${encodeURIComponent(xHandle)}&email=${encodeURIComponent(email.trim().toLowerCase())}`);
-      const pre = await check.json();
-      if (pre.walletTaken) throw new Error("Wallet already used");
-      if (pre.xTaken) throw new Error("This X account already joined");
-      if (pre.emailTaken) throw new Error("This email already joined");
-
       const res = await fetch("/api/waitlist", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email: email.trim().toLowerCase(), wallet: w, xHandle }),
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          wallet: w,
+          xHandle,
+          referredBy: refCode.replace(/^@/, "").trim().toLowerCase() || undefined,
+        }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Failed");
       completeTask("waitlist", { wallet: w, xHandle });
       setStatus("ok");
-      setMessage("LOCKED. 1 X / 1 WALLET / 1 EMAIL.");
+      setMessage(
+        json.referralAwarded
+          ? "JOINED. REFERRAL COUNTED +200 TO INVITER."
+          : "LOCKED. 1 X / 1 WALLET / 1 EMAIL."
+      );
     } catch (err) {
       setStatus("error");
       setMessage(err instanceof Error ? err.message.toUpperCase() : "FAILED.");
@@ -71,19 +66,16 @@ export default function WaitlistForm({ xHandle }: { xHandle?: string | null }) {
         <li>1. CONNECT X</li>
         <li>2. PASTE WALLET 0x</li>
         <li>3. PASTE EMAIL — JOIN</li>
-        <li>1 X = 1 WALLET = 1 EMAIL</li>
+        <li>REF OPTIONAL. +200 IF INVITEE COMPLETES WAITLIST.</li>
       </ol>
 
-      {!ready && (
-        <p className="font-tech text-xs text-green tracking-widest">CONNECT X FIRST TO UNLOCK FORM.</p>
-      )}
+      {!ready && <p className="font-tech text-xs text-green tracking-widest">CONNECT X FIRST TO UNLOCK FORM.</p>}
 
       <form onSubmit={onSubmit} className="w-full flex flex-col gap-3">
         <input
           value={wallet}
           disabled={!ready || status === "ok"}
           onChange={(e) => setWallet(e.target.value)}
-          onBlur={(e) => checkWallet(e.target.value)}
           placeholder="WALLET 0x..."
           className="w-full px-4 py-3 bg-black/80 border border-green/30 text-green font-tech text-sm tracking-widest outline-none focus:border-green box-aura disabled:opacity-40"
         />
@@ -95,6 +87,13 @@ export default function WaitlistForm({ xHandle }: { xHandle?: string | null }) {
           onChange={(e) => setEmail(e.target.value)}
           placeholder="EMAIL"
           className="w-full px-4 py-3 bg-black/80 border border-green/30 text-green font-tech text-sm tracking-widest uppercase outline-none focus:border-green box-aura disabled:opacity-40"
+        />
+        <input
+          disabled={!ready || status === "ok"}
+          value={refCode}
+          onChange={(e) => setRefCode(e.target.value)}
+          placeholder="REF CODE (X HANDLE)"
+          className="w-full px-4 py-3 bg-black/80 border border-green/30 text-green font-tech text-sm tracking-widest outline-none focus:border-green box-aura disabled:opacity-40"
         />
         <button
           type="submit"
