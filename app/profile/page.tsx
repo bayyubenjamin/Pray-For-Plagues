@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAccount, useChainId, useSwitchChain } from "wagmi";
 import SectionTitle from "@/components/SectionTitle";
@@ -15,25 +15,28 @@ export default function ProfilePage() {
   const chainId = useChainId();
   const { switchChain, isPending } = useSwitchChain();
   const [player, setPlayer] = useState<PlayerState>({ completed: [], points: 0 });
-  const [xInput, setXInput] = useState("");
+  const [xMsg, setXMsg] = useState("");
 
   const onRh = chainId === robinhoodChain.id;
 
   useEffect(() => {
     setPlayer(loadPlayer());
+    const params = new URLSearchParams(window.location.search);
+    const x = params.get("x");
+    const handle = params.get("handle");
+    if (x === "connected" && handle) {
+      completeTask("connect_x", { xHandle: handle });
+      setPlayer(loadPlayer());
+      setXMsg("X CONNECTED");
+      window.history.replaceState({}, "", "/profile");
+    } else if (x === "missing_app") {
+      setXMsg("SET X_CLIENT_ID ON VERCEL");
+    } else if (x === "denied") {
+      setXMsg("X AUTH CANCELED");
+    } else if (x === "token_error" || x === "user_error") {
+      setXMsg("X AUTH FAILED. CHECK APP SETTINGS.");
+    }
   }, [address, chainId]);
-
-  const refresh = () => setPlayer(loadPlayer());
-
-  const linkX = (e: FormEvent) => {
-    e.preventDefault();
-    const handle = xInput.replace(/^@/, "").trim();
-    if (!handle) return;
-    window.open(`https://x.com/${handle}`, "_blank", "noopener,noreferrer");
-    completeTask("connect_x", { xHandle: handle });
-    setXInput("");
-    refresh();
-  };
 
   return (
     <div className="w-full max-w-3xl mx-auto px-4 py-12">
@@ -74,18 +77,14 @@ export default function ProfilePage() {
               @{player.xHandle}
             </a>
           ) : (
-            <form onSubmit={linkX} className="flex gap-2">
-              <input
-                value={xInput}
-                onChange={(e) => setXInput(e.target.value)}
-                placeholder="@HANDLE"
-                className="flex-1 px-3 py-2 bg-black border border-green/30 text-green font-tech text-xs tracking-widest uppercase outline-none"
-              />
-              <button type="submit" className="px-4 py-2 border border-green text-green font-tech text-xs tracking-widest hover:bg-darkGreen">
-                LINK
-              </button>
-            </form>
+            <a
+              href="/api/x/start"
+              className="inline-block px-6 py-3 border border-green text-green font-tech text-xs tracking-widest hover:bg-darkGreen box-aura"
+            >
+              CONNECT X
+            </a>
           )}
+          {xMsg && <p className="mt-2 font-tech text-[10px] text-green tracking-widest">{xMsg}</p>}
         </div>
 
         <div>
@@ -95,15 +94,12 @@ export default function ProfilePage() {
               const done = player.completed.includes(task.id);
               return (
                 <li key={task.id} className="flex items-center justify-between border border-green/15 px-3 py-3 font-tech text-xs tracking-widest">
-                  <span className={done ? "text-green" : "text-white"}>{done ? "✓ " : "• "}{task.label}</span>
+                  <span className={done ? "text-green" : "text-white"}>{done ? "\u2713 " : "\u2022 "}{task.label}</span>
                   <span className="text-green">+{task.points}</span>
                 </li>
               );
             })}
           </ul>
-          <Link href="/upgrade" onClick={() => { completeTask("visit_lab"); }} className="inline-block mt-4 text-green font-tech text-xs tracking-widest border-b border-green">
-            OPEN LAB TASK
-          </Link>
         </div>
 
         <div>
