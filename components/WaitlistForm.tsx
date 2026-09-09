@@ -3,17 +3,29 @@
 import { FormEvent, useState } from "react";
 import { completeTask } from "@/lib/points";
 
-export default function WaitlistForm({
-  xHandle,
-}: {
-  xHandle?: string | null;
-}) {
+const WALLET_RE = /^0x[a-fA-F0-9]{40}$/;
+
+export default function WaitlistForm({ xHandle }: { xHandle?: string | null }) {
   const [wallet, setWallet] = useState("");
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [message, setMessage] = useState("");
 
   const ready = Boolean(xHandle);
+
+  const checkWallet = async (value: string) => {
+    const w = value.trim().toLowerCase();
+    if (!WALLET_RE.test(w)) return;
+    const res = await fetch(`/api/waitlist?wallet=${encodeURIComponent(w)}`);
+    const json = await res.json();
+    if (json.walletTaken) {
+      setStatus("error");
+      setMessage("WALLET ALREADY USED");
+    } else if (message === "WALLET ALREADY USED") {
+      setStatus("idle");
+      setMessage("");
+    }
+  };
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -22,27 +34,31 @@ export default function WaitlistForm({
       setMessage("CONNECT X FIRST.");
       return;
     }
+    const w = wallet.trim().toLowerCase();
+    if (!WALLET_RE.test(w)) {
+      setStatus("error");
+      setMessage("PASTE A VALID WALLET 0X.");
+      return;
+    }
     setStatus("loading");
     setMessage("");
     try {
+      const check = await fetch(`/api/waitlist?wallet=${encodeURIComponent(w)}&x=${encodeURIComponent(xHandle)}&email=${encodeURIComponent(email.trim().toLowerCase())}`);
+      const pre = await check.json();
+      if (pre.walletTaken) throw new Error("Wallet already used");
+      if (pre.xTaken) throw new Error("This X account already joined");
+      if (pre.emailTaken) throw new Error("This email already joined");
+
       const res = await fetch("/api/waitlist", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          email: email.trim().toLowerCase(),
-          wallet: wallet.trim().toLowerCase(),
-          xHandle,
-        }),
+        body: JSON.stringify({ email: email.trim().toLowerCase(), wallet: w, xHandle }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Failed");
-      completeTask("waitlist", { wallet: wallet.trim().toLowerCase(), xHandle });
+      completeTask("waitlist", { wallet: w, xHandle });
       setStatus("ok");
-      setMessage(
-        json.stored === "nhost"
-          ? "LOCKED. 1 X / 1 WALLET / 1 EMAIL."
-          : "SAVED LOCALLY. ADD NHOST ENV TO SYNC DB."
-      );
+      setMessage("LOCKED. 1 X / 1 WALLET / 1 EMAIL.");
     } catch (err) {
       setStatus("error");
       setMessage(err instanceof Error ? err.message.toUpperCase() : "FAILED.");
@@ -67,6 +83,7 @@ export default function WaitlistForm({
           value={wallet}
           disabled={!ready || status === "ok"}
           onChange={(e) => setWallet(e.target.value)}
+          onBlur={(e) => checkWallet(e.target.value)}
           placeholder="WALLET 0x..."
           className="w-full px-4 py-3 bg-black/80 border border-green/30 text-green font-tech text-sm tracking-widest outline-none focus:border-green box-aura disabled:opacity-40"
         />

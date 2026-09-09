@@ -20,20 +20,22 @@ const INSERT = `
         status: "pending"
       }
     ) {
-      id
-      wallet
-      email
-      x_handle
-      status
+      id wallet email x_handle status
     }
   }
 `;
 
 const FIND = `
-  query FindWaitlist($x: String, $wallet: String, $email: String) {
-    by_x: waitlist(where: { x_handle: { _eq: $x } }, limit: 1) { id wallet email x_handle }
-    by_wallet: waitlist(where: { wallet: { _eq: $wallet } }, limit: 1) { id wallet email x_handle }
-    by_email: waitlist(where: { email: { _eq: $email } }, limit: 1) { id wallet email x_handle }
+  query FindWaitlist($x: String!, $wallet: String!, $email: String!) {
+    by_x: waitlist(where: { x_handle: { _ilike: $x } }, limit: 1) {
+      id wallet email x_handle
+    }
+    by_wallet: waitlist(where: { wallet: { _ilike: $wallet } }, limit: 1) {
+      id wallet email x_handle
+    }
+    by_email: waitlist(where: { email: { _ilike: $email } }, limit: 1) {
+      id wallet email x_handle
+    }
   }
 `;
 
@@ -41,11 +43,27 @@ function isAddress(value: string) {
   return /^0x[a-fA-F0-9]{40}$/.test(value);
 }
 
+function normalizeWallet(value: string) {
+  return value.trim().toLowerCase();
+}
+
+async function lookup(x: string, wallet: string, email: string) {
+  return nhostAdminRequest<{
+    by_x: { id: string; wallet: string; email: string; x_handle: string }[];
+    by_wallet: { id: string; wallet: string; email: string; x_handle: string }[];
+    by_email: { id: string; wallet: string; email: string; x_handle: string }[];
+  }>(FIND, {
+    x: x || "__none__",
+    wallet: wallet || "__none__",
+    email: email || "__none__",
+  });
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
     const email = String(body.email ?? "").trim().toLowerCase();
-    const wallet = String(body.wallet ?? "").trim().toLowerCase();
+    const wallet = normalizeWallet(String(body.wallet ?? ""));
     const xHandle = String(body.xHandle ?? "").replace(/^@/, "").trim().toLowerCase();
 
     if (!xHandle) {
@@ -57,25 +75,29 @@ export async function POST(req: Request) {
     if (!email.includes("@") || !email.includes(".")) {
       return NextResponse.json({ error: "Invalid email" }, { status: 400 });
     }
-
     if (!isNhostConfigured) {
-      return NextResponse.json({ ok: true, stored: "local", wallet, email, xHandle });
+      return NextResponse.json({ error: "Nhost backend is not configured" }, { status: 503 });
     }
 
-    const existing = await nhostAdminRequest<{
-      by_x: { wallet: string; email: string; x_handle: string }[];
-      by_wallet: { wallet: string; email: string; x_handle: string }[];
-      by_email: { wallet: string; email: string; x_handle: string }[];
-    }>(FIND, { x: xHandle, wallet, email });
+    const existing = await lookup(xHandle, wallet, email);
 
-    if (existing.by_x[0]) {
-      return NextResponse.json({ error: "This X account already joined" }, { status: 409 });
-    }
     if (existing.by_wallet[0]) {
-      return NextResponse.json({ error: "This wallet already joined" }, { status: 409 });
+      return NextResponse.json(
+        { error: "Wallet already used", field: "wallet", taken: true },
+        { status: 409 }
+      );
+    }
+    if (existing.by_x[0]) {
+      return NextResponse.json(
+        { error: "This X account already joined", field: "x", taken: true },
+        { status: 409 }
+      );
     }
     if (existing.by_email[0]) {
-      return NextResponse.json({ error: "This email already joined" }, { status: 409 });
+      return NextResponse.json(
+        { error: "This email already joined", field: "email", taken: true },
+        { status: 409 }
+      );
     }
 
     const data = await nhostAdminRequest<{ insert_waitlist_one: { id: string } }>(INSERT, {
@@ -89,8 +111,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, stored: "nhost", id: data.insert_waitlist_one?.id });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Waitlist failed";
-    if (message.includes("Uniqueness") || message.includes("unique")) {
-      return NextResponse.json({ error: "X, wallet, or email already used" }, { status: 409 });
+    if (/unique|uniqueness|constraint/i.test(message)) {
+      return NextResponse.json({ error: "Wallet already used", field: "wallet", taken: true }, { status: 409 });
     }
     return NextResponse.json({ error: message }, { status: 500 });
   }
@@ -99,19 +121,29 @@ export async function POST(req: Request) {
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const xHandle = (url.searchParams.get("x") || "").replace(/^@/, "").trim().toLowerCase();
-  const wallet = (url.searchParams.get("wallet") || "").trim().toLowerCase();
-  if (!isNhostConfigured) return NextResponse.json({ ok: true, lockedWallet: null });
-  if (!xHandle && !wallet) return NextResponse.json({ lockedWallet: null });
+  const wallet = normalizeWallet(url.searchParams.get("wallet") || "");
+  const email = (url.searchParams.get("email") || "").trim().toLowerCase();
+
+  if (!isNhostConfigured) {
+    return NextResponse.json({ ok: false, error: "Nhost backend is not configured" }, { status: 503 });
+  }
 
   try {
-    const existing = await nhostAdminRequest<{
-      by_x: { wallet: string; x_handle: string }[];
-      by_wallet: { wallet: string; x_handle: string }[];
-      by_email: { wallet: string; x_handle: string }[];
-    }>(FIND, { x: xHandle || "__none__", wallet: wallet || "__none__", email: "__none__" });
-    const row = existing.by_x[0] || existing.by_wallet[0] || null;
-    return NextResponse.json({ ok: true, entry: row, lockedWallet: row?.wallet ?? null });
-  } catch {
-    return NextResponse.json({ lockedWallet: null });
+    const existing = await lookup(xHandle, wallet, email);
+    const walletTaken = Boolean(existing.by_wallet[0]);
+    const row = existing.by_x[0] || existing.by_wallet[0] || existing.by_email[0] || null;
+    return NextResponse.json({
+      ok: true,
+      walletTaken,
+      xTaken: Boolean(existing.by_x[0]),
+      emailTaken: Boolean(existing.by_email[0]),
+      lockedWallet: existing.by_x[0]?.wallet ?? existing.by_wallet[0]?.wallet ?? null,
+      entry: row,
+    });
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Lookup failed" },
+      { status: 500 }
+    );
   }
 }
