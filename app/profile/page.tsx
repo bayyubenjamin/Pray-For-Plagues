@@ -7,6 +7,7 @@ import ConnectWallet from "@/components/ConnectWallet";
 import WaitlistForm from "@/components/WaitlistForm";
 import { formatAddress } from "@/lib/utils";
 import { TASKS, completeTask, loadPlayer, type PlayerState } from "@/lib/points";
+import { saveRef } from "@/lib/referral";
 
 export default function ProfilePage() {
   const { address, isConnected } = useAccount();
@@ -15,10 +16,14 @@ export default function ProfilePage() {
   const [xMsg, setXMsg] = useState("");
   const [lockMsg, setLockMsg] = useState("");
   const [rank, setRank] = useState<number | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    setPlayer(loadPlayer());
     const params = new URLSearchParams(window.location.search);
+    const ref = params.get("ref");
+    if (ref) saveRef(ref);
+
+    setPlayer(loadPlayer());
     const x = params.get("x");
     const handle = params.get("handle");
     if (x === "connected" && handle) {
@@ -57,6 +62,10 @@ export default function ProfilePage() {
       .catch(() => {});
   }, [address, player.xHandle, disconnect]);
 
+  const refLink = player.xHandle
+    ? `https://prayforplagues.xyz/profile?ref=${encodeURIComponent(player.xHandle)}`
+    : "";
+
   return (
     <div className="w-full max-w-3xl mx-auto px-4 py-12">
       <SectionTitle title="PROFILE" subtitle="X FIRST. THEN WALLET + EMAIL." />
@@ -86,6 +95,25 @@ export default function ProfilePage() {
           )}
           {xMsg && <p className="mt-2 font-tech text-[10px] text-green tracking-widest">{xMsg}</p>}
         </div>
+
+        {player.xHandle && (
+          <div>
+            <p className="font-tech text-[10px] tracking-widest text-gray mb-3">REFERRAL</p>
+            <p className="font-tech text-[10px] text-gray tracking-widest mb-2">
+              +200 WHEN INVITEE JOINS WAITLIST (X + WALLET + EMAIL UNIQUE)
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard.writeText(refLink);
+                setCopied(true);
+              }}
+              className="w-full text-left px-4 py-3 border border-green/30 text-green font-tech text-[10px] tracking-widest break-all hover:bg-darkGreen"
+            >
+              {copied ? "COPIED" : refLink}
+            </button>
+          </div>
+        )}
 
         <div>
           <p className="font-tech text-[10px] tracking-widest text-gray mb-3">2–3. WAITLIST</p>
