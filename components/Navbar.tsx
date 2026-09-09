@@ -7,7 +7,7 @@ import ConnectWallet from '@/components/ConnectWallet';
 
 export default function Navbar() {
   const pathname = usePathname();
-  const isActive = (path: string) => pathname === path;
+  const isActive = (path: string) => pathname === path || (path === '/task' && pathname === '/leaderboard');
 
   return (
     <>
@@ -27,7 +27,7 @@ export default function Navbar() {
             <Link href="/" className={`transition-colors ${isActive('/') ? 'text-green font-bold drop-shadow-[0_0_8px_rgba(74,222,128,0.8)]' : 'text-white hover:text-green'}`}>HOME</Link>
             <Link href="/inventory" className={`transition-colors ${isActive('/inventory') ? 'text-green font-bold drop-shadow-[0_0_8px_rgba(74,222,128,0.8)]' : 'text-white hover:text-green'}`}>INVENTORY</Link>
             <Link href="/upgrade" className={`transition-colors ${isActive('/upgrade') ? 'text-green font-bold drop-shadow-[0_0_8px_rgba(74,222,128,0.8)]' : 'text-white hover:text-green'}`}>UPGRADE</Link>
-            <Link href="/leaderboard" className={`transition-colors ${isActive('/leaderboard') ? 'text-green font-bold drop-shadow-[0_0_8px_rgba(74,222,128,0.8)]' : 'text-white hover:text-green'}`}>LEADERBOARD</Link>
+            <Link href="/task" className={`transition-colors ${isActive('/task') ? 'text-green font-bold drop-shadow-[0_0_8px_rgba(74,222,128,0.8)]' : 'text-white hover:text-green'}`}>TASK</Link>
             <Link href="/profile" className={`transition-colors ${isActive('/profile') ? 'text-green font-bold drop-shadow-[0_0_8px_rgba(74,222,128,0.8)]' : 'text-white hover:text-green'}`}>PROFILE</Link>
           </nav>
 
@@ -72,11 +72,11 @@ export default function Navbar() {
           <span className="mt-1">UPGRADE</span>
         </Link>
 
-        <Link href="/leaderboard" className={`flex flex-col items-center transition group py-1 ${isActive('/leaderboard') ? 'text-green font-bold' : 'text-gray-400 hover:text-green'}`}>
-          <svg className={`w-5 h-5 transition ${isActive('/leaderboard') ? 'text-green drop-shadow-[0_0_8px_rgba(74,222,128,0.8)]' : 'group-hover:drop-shadow-[0_0_8px_rgba(74,222,128,0.8)]'}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        <Link href="/task" className={`flex flex-col items-center transition group py-1 ${isActive('/task') ? 'text-green font-bold' : 'text-gray-400 hover:text-green'}`}>
+          <svg className={`w-5 h-5 transition ${isActive('/task') ? 'text-green drop-shadow-[0_0_8px_rgba(74,222,128,0.8)]' : 'group-hover:drop-shadow-[0_0_8px_rgba(74,222,128,0.8)]'}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
           </svg>
-          <span className="mt-1">RANK</span>
+          <span className="mt-1">TASK</span>
         </Link>
 
         <Link href="/profile" className={`flex flex-col items-center transition group py-1 ${isActive('/profile') ? 'text-green font-bold' : 'text-gray-400 hover:text-green'}`}>
