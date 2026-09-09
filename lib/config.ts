@@ -2,23 +2,23 @@ import { createConfig, http } from "wagmi";
 import { injected } from "wagmi/connectors";
 import { defineChain } from "viem";
 
-/** Robinhood Chain placeholder — update chainId + RPC when official values land. */
 export const robinhoodChain = defineChain({
-  id: Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? 1),
+  id: 4663,
   name: "Robinhood Chain",
-  nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
+  nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
   rpcUrls: {
-    default: {
-      http: [process.env.NEXT_PUBLIC_RPC_URL ?? "https://cloudflare-eth.com"],
-    },
+    default: { http: ["https://rpc.mainnet.chain.robinhood.com"] },
+  },
+  blockExplorers: {
+    default: { name: "Blockscout", url: "https://robinhoodchain.blockscout.com" },
   },
 });
 
 export const wagmiConfig = createConfig({
   chains: [robinhoodChain],
-  connectors: [injected()],
+  connectors: [injected({ shimDisconnect: true })],
   transports: {
-    [robinhoodChain.id]: http(),
+    [robinhoodChain.id]: http("https://rpc.mainnet.chain.robinhood.com"),
   },
   ssr: true,
 });
