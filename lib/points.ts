@@ -37,6 +37,7 @@ export function completeTask(id: TaskId, extra?: Partial<PlayerState>): PlayerSt
   if (current.completed.includes(id)) {
     const next = { ...current, ...extra };
     savePlayer(next);
+    syncRank(next);
     return next;
   }
   const task = TASKS.find((t) => t.id === id);
@@ -47,5 +48,20 @@ export function completeTask(id: TaskId, extra?: Partial<PlayerState>): PlayerSt
     points: current.points + (task?.points ?? 0),
   };
   savePlayer(next);
+  syncRank(next);
   return next;
+}
+
+function syncRank(state: PlayerState) {
+  if (typeof window === "undefined") return;
+  if (!state.xHandle && !state.wallet) return;
+  fetch("/api/rank", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      xHandle: state.xHandle,
+      wallet: state.wallet,
+      points: state.points,
+    }),
+  }).catch(() => {});
 }
