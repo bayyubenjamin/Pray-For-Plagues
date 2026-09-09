@@ -10,11 +10,16 @@ export default function WaitlistForm({ xHandle }: { xHandle?: string | null }) {
   const [wallet, setWallet] = useState("");
   const [email, setEmail] = useState("");
   const [refCode, setRefCode] = useState("");
+  const [refLocked, setRefLocked] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    setRefCode(captureRefFromUrl());
+    const captured = captureRefFromUrl();
+    if (captured) {
+      setRefCode(captured);
+      setRefLocked(true);
+    }
   }, []);
 
   const ready = Boolean(xHandle);
@@ -66,10 +71,17 @@ export default function WaitlistForm({ xHandle }: { xHandle?: string | null }) {
         <li>1. CONNECT X</li>
         <li>2. PASTE WALLET 0x</li>
         <li>3. PASTE EMAIL — JOIN</li>
-        <li>REF OPTIONAL. +200 IF INVITEE COMPLETES WAITLIST.</li>
+        <li>1 X = 1 WALLET = 1 EMAIL</li>
       </ol>
 
-      {!ready && <p className="font-tech text-xs text-green tracking-widest">CONNECT X FIRST TO UNLOCK FORM.</p>}
+      {!ready && (
+        <a
+          href="/api/x/start"
+          className="inline-block px-6 py-3 border border-green text-green font-tech text-xs tracking-widest text-center hover:bg-darkGreen box-aura"
+        >
+          CONNECT X
+        </a>
+      )}
 
       <form onSubmit={onSubmit} className="w-full flex flex-col gap-3">
         <input
@@ -89,12 +101,18 @@ export default function WaitlistForm({ xHandle }: { xHandle?: string | null }) {
           className="w-full px-4 py-3 bg-black/80 border border-green/30 text-green font-tech text-sm tracking-widest uppercase outline-none focus:border-green box-aura disabled:opacity-40"
         />
         <input
-          disabled={!ready || status === "ok"}
+          readOnly={refLocked || status === "ok"}
+          disabled={(!ready && !refLocked) || status === "ok"}
           value={refCode}
-          onChange={(e) => setRefCode(e.target.value)}
+          onChange={(e) => {
+            if (!refLocked) setRefCode(e.target.value);
+          }}
           placeholder="REF CODE (X HANDLE)"
-          className="w-full px-4 py-3 bg-black/80 border border-green/30 text-green font-tech text-sm tracking-widest outline-none focus:border-green box-aura disabled:opacity-40"
+          className="w-full px-4 py-3 bg-black/80 border border-green/30 text-green font-tech text-sm tracking-widest outline-none focus:border-green box-aura disabled:opacity-40 read-only:opacity-70"
         />
+        {refLocked && (
+          <p className="font-tech text-[10px] text-green tracking-widest">REF LOCKED FROM INVITE LINK</p>
+        )}
         <button
           type="submit"
           disabled={!ready || status === "loading" || status === "ok"}
