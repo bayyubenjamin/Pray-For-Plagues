@@ -1,6 +1,7 @@
 import SectionTitle from "@/components/SectionTitle";
 import AntidoteCard from "@/components/AntidoteCard";
 import ScrollReveal from "@/components/ScrollReveal";
+import EnterLabButton from "@/components/EnterLabButton";
 import { MOCK_NFTS } from "@/lib/mockData";
 import Link from "next/link";
 
@@ -18,12 +19,7 @@ export default function Home() {
             THE PLAGUE HAS ARRIVED ON <span className="text-green font-bold">ROBINHOOD</span> CHAIN.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mt-4 w-full sm:w-auto px-6 sm:px-0">
-            <Link
-              href="/upgrade"
-              className="px-8 sm:px-10 py-3.5 sm:py-4 bg-green text-black font-tech font-bold text-sm sm:text-lg tracking-[0.2em] hover:bg-green-bright transition-colors uppercase text-center box-aura"
-            >
-              ENTER LAB
-            </Link>
+            <EnterLabButton className="px-8 sm:px-10 py-3.5 sm:py-4 bg-green text-black font-tech font-bold text-sm sm:text-lg tracking-[0.2em] hover:bg-green-bright transition-colors uppercase text-center box-aura" />
             <Link
               href="/profile"
               className="px-8 sm:px-10 py-3.5 sm:py-4 bg-black/80 backdrop-blur-sm border border-green text-green font-tech font-bold text-sm sm:text-lg tracking-[0.2em] hover:bg-darkGreen transition-colors uppercase text-center box-aura"
