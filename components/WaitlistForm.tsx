@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { completeTask } from "@/lib/points";
 import { captureRefFromUrl } from "@/lib/referral";
+import SocialTasks from "@/components/SocialTasks";
 
 const WALLET_RE = /^0x[a-fA-F0-9]{40}$/;
 
@@ -69,9 +70,8 @@ export default function WaitlistForm({ xHandle }: { xHandle?: string | null }) {
     <div className="w-full flex flex-col gap-4">
       <ol className="font-tech text-[10px] text-gray tracking-widest leading-relaxed space-y-1">
         <li>1. CONNECT X</li>
-        <li>2. PASTE WALLET 0x</li>
-        <li>3. PASTE EMAIL — JOIN</li>
-        <li>1 X = 1 WALLET = 1 EMAIL</li>
+        <li>2. SOCIAL TASKS</li>
+        <li>3. PASTE WALLET + EMAIL</li>
       </ol>
 
       {!ready && (
@@ -82,6 +82,12 @@ export default function WaitlistForm({ xHandle }: { xHandle?: string | null }) {
           CONNECT X
         </a>
       )}
+
+      {ready && (
+        <p className="font-tech text-[10px] text-green tracking-widest">X CONNECTED @{xHandle}</p>
+      )}
+
+      <SocialTasks enabled={ready} />
 
       <form onSubmit={onSubmit} className="w-full flex flex-col gap-3">
         <input
