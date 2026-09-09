@@ -1,94 +1,90 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useAccount } from "wagmi";
-import ConnectWallet from "@/components/ConnectWallet";
-import { completeTask, loadPlayer } from "@/lib/points";
+import { completeTask } from "@/lib/points";
 
-export default function WaitlistForm() {
-  const { address, isConnected } = useAccount();
+export default function WaitlistForm({
+  xHandle,
+}: {
+  xHandle?: string | null;
+}) {
+  const [wallet, setWallet] = useState("");
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [message, setMessage] = useState("");
 
+  const ready = Boolean(xHandle);
+
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!address) {
+    if (!xHandle) {
       setStatus("error");
-      setMessage("CONNECT WALLET FIRST.");
+      setMessage("CONNECT X FIRST.");
       return;
     }
-    if (!email.includes("@")) {
-      setStatus("error");
-      setMessage("ENTER A VALID EMAIL.");
-      return;
-    }
-
     setStatus("loading");
     setMessage("");
-
     try {
-      const player = loadPlayer();
       const res = await fetch("/api/waitlist", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           email: email.trim().toLowerCase(),
-          wallet: address,
-          xHandle: player.xHandle ?? null,
+          wallet: wallet.trim().toLowerCase(),
+          xHandle,
         }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Failed");
-
-      completeTask("waitlist", { wallet: address });
+      completeTask("waitlist", { wallet: wallet.trim().toLowerCase(), xHandle });
       setStatus("ok");
       setMessage(
         json.stored === "nhost"
-          ? "WAITLIST SAVED. WALLET LOCKED."
-          : "WAITLIST SAVED ON THIS DEVICE. ADD NHOST ENV TO SYNC SERVER."
+          ? "LOCKED. 1 X / 1 WALLET / 1 EMAIL."
+          : "SAVED LOCALLY. ADD NHOST ENV TO SYNC DB."
       );
-      setEmail("");
     } catch (err) {
       setStatus("error");
-      setMessage(err instanceof Error ? err.message.toUpperCase() : "FAILED TO JOIN.");
+      setMessage(err instanceof Error ? err.message.toUpperCase() : "FAILED.");
     }
   };
 
   return (
     <div className="w-full flex flex-col gap-4">
-      <p className="font-tech text-[10px] text-gray tracking-widest leading-relaxed">
-        SITE ALLOWLIST — CONNECT WALLET, LINK X, THEN LOCK EMAIL.
-        UTILITY (UPGRADE / $PLAGUES) COMES AFTER MINT.
-      </p>
+      <ol className="font-tech text-[10px] text-gray tracking-widest leading-relaxed space-y-1">
+        <li>1. CONNECT X</li>
+        <li>2. PASTE WALLET 0x</li>
+        <li>3. PASTE EMAIL — JOIN</li>
+        <li>1 X = 1 WALLET = 1 EMAIL</li>
+      </ol>
 
-      {!isConnected && (
-        <div className="flex flex-col gap-3">
-          <p className="font-tech text-xs text-green tracking-widest">WALLET REQUIRED</p>
-          <ConnectWallet />
-        </div>
+      {!ready && (
+        <p className="font-tech text-xs text-green tracking-widest">CONNECT X FIRST TO UNLOCK FORM.</p>
       )}
 
       <form onSubmit={onSubmit} className="w-full flex flex-col gap-3">
-        {address && (
-          <p className="font-tech text-[10px] text-green tracking-widest">
-            WALLET: {address.slice(0, 6)}...{address.slice(-4)}
-          </p>
-        )}
+        <input
+          value={wallet}
+          disabled={!ready || status === "ok"}
+          onChange={(e) => setWallet(e.target.value)}
+          placeholder="WALLET 0x..."
+          className="w-full px-4 py-3 bg-black/80 border border-green/30 text-green font-tech text-sm tracking-widest outline-none focus:border-green box-aura disabled:opacity-40"
+        />
         <input
           type="email"
           required
+          disabled={!ready || status === "ok"}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="EMAIL"
-          className="w-full px-4 py-3 bg-black/80 border border-green/30 text-green font-tech text-sm tracking-widest uppercase outline-none focus:border-green box-aura"
+          className="w-full px-4 py-3 bg-black/80 border border-green/30 text-green font-tech text-sm tracking-widest uppercase outline-none focus:border-green box-aura disabled:opacity-40"
         />
         <button
           type="submit"
-          disabled={status === "loading" || !isConnected}
+          disabled={!ready || status === "loading" || status === "ok"}
           className="px-8 py-3 bg-green text-black font-tech font-bold text-sm tracking-[0.2em] hover:bg-green-bright transition-colors uppercase box-aura disabled:opacity-50"
         >
-          {status === "loading" ? "SAVING..." : "JOIN WAITLIST"}
+          {status === "loading" ? "SAVING..." : status === "ok" ? "JOINED" : "JOIN WAITLIST"}
         </button>
         {message && (
           <p className={`font-tech text-xs tracking-widest ${status === "ok" ? "text-green" : "text-red-500"}`}>

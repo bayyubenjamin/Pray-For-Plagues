@@ -1,23 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { useAccount, useChainId, useSwitchChain } from "wagmi";
+import { useAccount, useDisconnect } from "wagmi";
 import SectionTitle from "@/components/SectionTitle";
 import ConnectWallet from "@/components/ConnectWallet";
 import WaitlistForm from "@/components/WaitlistForm";
 import { formatAddress } from "@/lib/utils";
-import { robinhoodChain } from "@/lib/config";
 import { TASKS, completeTask, loadPlayer, type PlayerState } from "@/lib/points";
 
 export default function ProfilePage() {
   const { address, isConnected } = useAccount();
-  const chainId = useChainId();
-  const { switchChain, isPending } = useSwitchChain();
+  const { disconnect } = useDisconnect();
   const [player, setPlayer] = useState<PlayerState>({ completed: [], points: 0 });
   const [xMsg, setXMsg] = useState("");
-
-  const onRh = chainId === robinhoodChain.id;
+  const [lockMsg, setLockMsg] = useState("");
 
   useEffect(() => {
     setPlayer(loadPlayer());
@@ -29,18 +25,34 @@ export default function ProfilePage() {
       setPlayer(loadPlayer());
       setXMsg("X CONNECTED");
       window.history.replaceState({}, "", "/profile");
-    } else if (x === "missing_app") {
-      setXMsg("SET X_CLIENT_ID ON VERCEL");
-    } else if (x === "denied") {
-      setXMsg("X AUTH CANCELED");
-    } else if (x === "token_error" || x === "user_error") {
-      setXMsg("X AUTH FAILED. CHECK APP SETTINGS.");
-    }
-  }, [address, chainId]);
+    } else if (x === "missing_app") setXMsg("SET X_CLIENT_ID ON VERCEL");
+    else if (x === "denied") setXMsg("X AUTH CANCELED");
+    else if (x === "token_error" || x === "user_error") setXMsg("X AUTH FAILED.");
+  }, []);
+
+  useEffect(() => {
+    const handle = loadPlayer().xHandle;
+    if (!handle && !address) return;
+    const q = new URLSearchParams();
+    if (handle) q.set("x", handle);
+    if (address) q.set("wallet", address);
+    fetch(`/api/waitlist?${q.toString()}`)
+      .then((r) => r.json())
+      .then((json) => {
+        const locked = json.lockedWallet as string | null;
+        if (locked && address && locked.toLowerCase() !== address.toLowerCase()) {
+          setLockMsg(`THIS X IS LOCKED TO ${locked.slice(0, 6)}...${locked.slice(-4)}. DISCONNECT AND USE THAT WALLET.`);
+          disconnect();
+        } else if (locked) {
+          setLockMsg(`WALLET LOCKED: ${locked.slice(0, 6)}...${locked.slice(-4)}`);
+        }
+      })
+      .catch(() => {});
+  }, [address, player.xHandle, disconnect]);
 
   return (
     <div className="w-full max-w-3xl mx-auto px-4 py-12">
-      <SectionTitle title="PROFILE" subtitle="WALLET. X. TASKS. POINTS." />
+      <SectionTitle title="PROFILE" subtitle="X FIRST. THEN WALLET + EMAIL." />
 
       <div className="mt-8 border border-green/20 bg-black/50 p-5 sm:p-8 panel-border flex flex-col gap-8">
         <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -48,43 +60,37 @@ export default function ProfilePage() {
             <p className="font-tech text-[10px] tracking-widest text-gray">POINTS</p>
             <p className="font-bangers text-4xl text-green text-aura">{player.points}</p>
           </div>
-          <ConnectWallet />
-        </div>
-
-        <div className="grid sm:grid-cols-2 gap-3 font-tech text-xs tracking-widest">
-          <div className="border border-green/20 p-4">
-            <p className="text-gray">WALLET</p>
-            <p className="text-green mt-1">{isConnected && address ? formatAddress(address) : "NOT CONNECTED"}</p>
-          </div>
-          <div className="border border-green/20 p-4">
-            <p className="text-gray">NETWORK</p>
-            <p className="text-green mt-1">{onRh ? "ROBINHOOD 4663" : "SWITCH REQUIRED"}</p>
-            {isConnected && !onRh && (
-              <button
-                onClick={() => switchChain({ chainId: robinhoodChain.id })}
-                className="mt-3 text-green border border-green px-3 py-1 hover:bg-darkGreen"
-              >
-                {isPending ? "SWITCHING..." : "ADD / SWITCH RH"}
-              </button>
-            )}
-          </div>
         </div>
 
         <div>
-          <p className="font-tech text-[10px] tracking-widest text-gray mb-3">CONNECT X</p>
+          <p className="font-tech text-[10px] tracking-widest text-gray mb-3">1. CONNECT X</p>
           {player.xHandle ? (
             <a href={`https://x.com/${player.xHandle}`} target="_blank" rel="noreferrer" className="font-tech text-green text-sm tracking-widest">
               @{player.xHandle}
             </a>
           ) : (
-            <a
-              href="/api/x/start"
-              className="inline-block px-6 py-3 border border-green text-green font-tech text-xs tracking-widest hover:bg-darkGreen box-aura"
-            >
+            <a href="/api/x/start" className="inline-block px-6 py-3 border border-green text-green font-tech text-xs tracking-widest hover:bg-darkGreen box-aura">
               CONNECT X
             </a>
           )}
           {xMsg && <p className="mt-2 font-tech text-[10px] text-green tracking-widest">{xMsg}</p>}
+        </div>
+
+        <div>
+          <p className="font-tech text-[10px] tracking-widest text-gray mb-3">2–3. WAITLIST</p>
+          <WaitlistForm xHandle={player.xHandle} />
+        </div>
+
+        <div>
+          <p className="font-tech text-[10px] tracking-widest text-gray mb-3">WALLET CONNECT (OPTIONAL NOW)</p>
+          <p className="font-tech text-[10px] text-gray tracking-widest mb-3">
+            AFTER WAITLIST, THIS X CAN ONLY USE THE PASTED WALLET.
+          </p>
+          <ConnectWallet />
+          {isConnected && address && (
+            <p className="mt-2 font-tech text-[10px] text-green tracking-widest">{formatAddress(address)}</p>
+          )}
+          {lockMsg && <p className="mt-2 font-tech text-[10px] text-green tracking-widest">{lockMsg}</p>}
         </div>
 
         <div>
@@ -100,11 +106,6 @@ export default function ProfilePage() {
               );
             })}
           </ul>
-        </div>
-
-        <div>
-          <p className="font-tech text-[10px] tracking-widest text-gray mb-4">WAITLIST</p>
-          <WaitlistForm />
         </div>
       </div>
     </div>
