@@ -1,45 +1,41 @@
-# Nhost setup — Pray For Plagues
+# Nhost + NFT waitlist
 
-Visual design is unchanged. This file is the backend checklist.
+Waitlist ini allowlist mint NFT (wallet = alamat OpenSea).
 
-## 1. Create project
-1. Sign up at https://app.nhost.io
-2. Create project `pray-for-plagues`
-3. Copy **subdomain** and **region**
+## 1. Project
+Buat project di https://app.nhost.io → copy **Subdomain**, **Region**, **Admin Secret**.
 
-## 2. Env
-Copy `.env.example` to `.env.local`:
+## 2. SQL
+Dashboard → Database → SQL → paste `nhost/schema.sql` → Run.
 
+## 3. Track tables (wajib)
+Hasura → Data → Untracked → track:
+- `waitlist`
+- `profiles`
+- `task_completions`
+
+Kalau constraint `waitlist_wallet_key` tidak ter-detect:
+Hasura → waitlist → Modify → reload metadata.
+
+## 4. Env lokal + Vercel
 ```
 NEXT_PUBLIC_NHOST_SUBDOMAIN=xxxx
 NEXT_PUBLIC_NHOST_REGION=eu-central-1
+NHOST_ADMIN_SECRET=xxxx
+NEXT_PUBLIC_OPENSEA_URL=https://opensea.io/collection/slug-kamu
+NEXT_PUBLIC_OPENSEA_SLUG=slug-kamu
 ```
 
-## 3. Database
-In Nhost → Hasura → Data → SQL, run `nhost/schema.sql`.
+`NHOST_ADMIN_SECRET` **jangan** pakai prefix NEXT_PUBLIC (server only).
 
-Track tables `waitlist` and `profiles` in Hasura.
+GraphQL URL default:
+`https://<subdomain>.hasura.<region>.nhost.run/v1/graphql`
 
-## 4. Permissions
-- `waitlist`: insert for public / anonymous
-- `profiles`: select / insert / update (tighten later to wallet owner)
+Kalau beda, set `NHOST_GRAPHQL_URL`.
 
-## 5. Auth (optional next)
-- Enable Email + Password or Magic Link
-- Later: sign a nonce with the wallet and attach `profiles.wallet` to `auth.users`
+## 5. Cek
+1. Connect wallet Robinhood
+2. Profile → isi email → JOIN NFT WAITLIST
+3. Hasura → Data → waitlist → harus ada row wallet + email
 
-## 6. Frontend already wired
-- `lib/nhost.ts` — client
-- `components/Providers.tsx` — NhostProvider + Wagmi
-- `components/WaitlistForm.tsx` — GraphQL insert
-- `components/ConnectWallet.tsx` — injected wallet
-- `/profile` — wallet profile shell
-- `/waitlist` — dedicated waitlist page
-
-## 7. After env is set
-```bash
-npm install
-npm run dev
-```
-
-Join waitlist will write to Nhost. Without env, UI still works and shows success locally only when request is skipped — set env before launch.
+Duplicate wallet/email = update row yang sama (upsert).
