@@ -31,11 +31,16 @@ export default function WaitlistForm() {
 
     try {
       if (isNhostConfigured) {
-        const { error } = await nhost.graphql.request(INSERT_WAITLIST, {
-          email: email.trim().toLowerCase(),
-          wallet: address ?? null,
+        const res = await nhost.graphql.request({
+          query: INSERT_WAITLIST,
+          variables: {
+            email: email.trim().toLowerCase(),
+            wallet: address ?? null,
+          },
         });
-        if (error) throw error;
+        if ("body" in res && res.body && typeof res.body === "object" && "errors" in res.body) {
+          throw new Error("graphql error");
+        }
       }
       setStatus("ok");
       setMessage("YOU ARE ON THE LIST.");
