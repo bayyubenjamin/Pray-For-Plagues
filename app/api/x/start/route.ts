@@ -5,15 +5,14 @@ function b64url(buf: Buffer) {
   return buf.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://prayforplagues.xyz";
+
 export async function GET() {
   const clientId = process.env.X_CLIENT_ID;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_PROJECT_PRODUCTION_URL
-    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-    : "https://prayforplagues.vercel.app";
-  const redirectUri = process.env.X_REDIRECT_URI || `${appUrl}/api/x/callback`;
+  const redirectUri = process.env.X_REDIRECT_URI || `${APP_URL}/api/x/callback`;
 
   if (!clientId) {
-    return NextResponse.redirect(`${appUrl}/profile?x=missing_app`);
+    return NextResponse.redirect(`${APP_URL}/profile?x=missing_app`);
   }
 
   const verifier = b64url(randomBytes(32));

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://prayforplagues.xyz";
+
 export async function GET(req: NextRequest) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://prayforplagues.vercel.app";
-  const redirectUri = process.env.X_REDIRECT_URI || `${appUrl}/api/x/callback`;
+  const redirectUri = process.env.X_REDIRECT_URI || `${APP_URL}/api/x/callback`;
   const clientId = process.env.X_CLIENT_ID || "";
   const clientSecret = process.env.X_CLIENT_SECRET || "";
 
@@ -12,7 +13,7 @@ export async function GET(req: NextRequest) {
   const verifier = req.cookies.get("x_verifier")?.value;
 
   if (!code || !state || !savedState || state !== savedState || !verifier) {
-    return NextResponse.redirect(`${appUrl}/profile?x=denied`);
+    return NextResponse.redirect(`${APP_URL}/profile?x=denied`);
   }
 
   const body = new URLSearchParams({
@@ -37,7 +38,7 @@ export async function GET(req: NextRequest) {
   });
   const token = await tokenRes.json();
   if (!token.access_token) {
-    return NextResponse.redirect(`${appUrl}/profile?x=token_error`);
+    return NextResponse.redirect(`${APP_URL}/profile?x=token_error`);
   }
 
   const meRes = await fetch("https://api.x.com/2/users/me", {
@@ -46,10 +47,10 @@ export async function GET(req: NextRequest) {
   const me = await meRes.json();
   const handle = me?.data?.username;
   if (!handle) {
-    return NextResponse.redirect(`${appUrl}/profile?x=user_error`);
+    return NextResponse.redirect(`${APP_URL}/profile?x=user_error`);
   }
 
-  const dest = NextResponse.redirect(`${appUrl}/profile?x=connected&handle=${encodeURIComponent(handle)}`);
+  const dest = NextResponse.redirect(`${APP_URL}/profile?x=connected&handle=${encodeURIComponent(handle)}`);
   dest.cookies.delete("x_verifier");
   dest.cookies.delete("x_state");
   return dest;
