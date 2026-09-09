@@ -32,20 +32,15 @@ export default function Home() {
 
       <section className="w-full max-w-6xl mx-auto px-4 py-20">
         <ScrollReveal>
-          <SectionTitle title="ANTIDOTE LAB" subtitle="UPGRADE. MUTATE. SURVIVE." />
+          <SectionTitle title="ANTIDOTE LAB" subtitle="SOON" />
         </ScrollReveal>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-10">
           {previewNFTs.map((nft, index) => (
             <ScrollReveal key={nft.id} delay={index * 100}>
-              <AntidoteCard nft={nft} actionLabel="OPEN" compact />
+              <AntidoteCard nft={nft} actionLabel="SOON" compact soon />
             </ScrollReveal>
           ))}
         </div>
-        <ScrollReveal className="flex justify-center mt-10" delay={200}>
-          <Link href="/inventory" className="text-green font-tech tracking-widest border-b border-green pb-1 hover:text-green-bright transition-colors text-sm">
-            VIEW ALL
-          </Link>
-        </ScrollReveal>
       </section>
     </div>
   );
