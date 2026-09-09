@@ -12,7 +12,7 @@ export async function GET() {
   const redirectUri = process.env.X_REDIRECT_URI || `${APP_URL}/api/x/callback`;
 
   if (!clientId) {
-    return NextResponse.redirect(`${APP_URL}/profile?x=missing_app`);
+    return NextResponse.redirect(`${APP_URL}/task?x=missing_app`);
   }
 
   const verifier = b64url(randomBytes(32));
