@@ -1,74 +1,68 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAccount, useDisconnect } from "wagmi";
+import { useAccount } from "wagmi";
 import SectionTitle from "@/components/SectionTitle";
 import ConnectWallet from "@/components/ConnectWallet";
 import WaitlistForm from "@/components/WaitlistForm";
 import { formatAddress } from "@/lib/utils";
 import { TASKS, completeTask, loadPlayer, type PlayerState } from "@/lib/points";
 import { saveRef } from "@/lib/referral";
+import { loadWaitlist } from "@/lib/waitlist-local";
+import { syncWaitlistFromServer } from "@/lib/sync-waitlist";
 
 export default function ProfilePage() {
   const { address, isConnected } = useAccount();
-  const { disconnect } = useDisconnect();
   const [player, setPlayer] = useState<PlayerState>({ completed: [], points: 0 });
   const [xMsg, setXMsg] = useState("");
-  const [lockMsg, setLockMsg] = useState("");
   const [rank, setRank] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
+  const [officialWallet, setOfficialWallet] = useState("");
+  const [joined, setJoined] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const ref = params.get("ref");
     if (ref) saveRef(ref);
-
-    setPlayer(loadPlayer());
     const x = params.get("x");
     const handle = params.get("handle");
     if (x === "connected" && handle) {
       completeTask("connect_x", { xHandle: handle });
-      setPlayer(loadPlayer());
-      setXMsg("X CONNECTED");
       window.history.replaceState({}, "", "/profile");
-    } else if (x === "missing_app") setXMsg("SET X_CLIENT_ID ON VERCEL");
-    else if (x === "denied") setXMsg("X AUTH CANCELED");
-    else if (x === "token_error" || x === "user_error") setXMsg("X AUTH FAILED.");
+      setXMsg("X CONNECTED");
+    }
+    setPlayer(loadPlayer());
+    const local = loadWaitlist();
+    setJoined(local.joined);
+    setOfficialWallet(local.wallet || "");
   }, []);
 
   useEffect(() => {
     const handle = loadPlayer().xHandle;
-    if (handle) {
-      fetch(`/api/rank?x=${encodeURIComponent(handle)}`)
-        .then((r) => r.json())
-        .then((json) => setRank(json.rank ?? null))
-        .catch(() => {});
-    }
-    if (!handle && !address) return;
-    const q = new URLSearchParams();
-    if (handle) q.set("x", handle);
-    if (address) q.set("wallet", address);
-    fetch(`/api/waitlist?${q.toString()}`)
+    if (!handle) return;
+    syncWaitlistFromServer(handle).then((row) => {
+      setJoined(row.joined);
+      setOfficialWallet(row.wallet || "");
+      setPlayer(loadPlayer());
+    });
+    fetch(`/api/rank?x=${encodeURIComponent(handle)}`)
       .then((r) => r.json())
-      .then((json) => {
-        const locked = json.lockedWallet as string | null;
-        if (locked && address && locked.toLowerCase() !== address.toLowerCase()) {
-          setLockMsg(`THIS X IS LOCKED TO ${locked.slice(0, 6)}...${locked.slice(-4)}. DISCONNECT AND USE THAT WALLET.`);
-          disconnect();
-        } else if (locked) {
-          setLockMsg(`WALLET LOCKED: ${locked.slice(0, 6)}...${locked.slice(-4)}`);
-        }
-      })
+      .then((json) => setRank(json.rank ?? null))
       .catch(() => {});
-  }, [address, player.xHandle, disconnect]);
+  }, [player.xHandle]);
 
   const refLink = player.xHandle
-    ? `https://prayforplagues.xyz/profile?ref=${encodeURIComponent(player.xHandle)}`
+    ? `https://prayforplagues.xyz/task?ref=${encodeURIComponent(player.xHandle)}`
     : "";
+
+  const match =
+    officialWallet && address
+      ? officialWallet.toLowerCase() === address.toLowerCase()
+      : false;
 
   return (
     <div className="w-full max-w-3xl mx-auto px-4 py-12">
-      <SectionTitle title="PROFILE" subtitle="X FIRST. THEN WALLET + EMAIL." />
+      <SectionTitle title="PROFILE" subtitle="SYNCED FROM WAITLIST" />
 
       <div className="mt-8 border border-green/20 bg-black/50 p-5 sm:p-8 panel-border flex flex-col gap-8">
         <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -78,12 +72,36 @@ export default function ProfilePage() {
           </div>
           <div>
             <p className="font-tech text-[10px] tracking-widest text-gray">RANK</p>
-            <p className="font-bangers text-4xl text-green text-aura">{rank ?? "—"}</p>
+            <p className="font-bangers text-4xl text-green text-aura">{rank ?? "\u2014"}</p>
+          </div>
+        </div>
+
+        <div className="grid sm:grid-cols-2 gap-3 font-tech text-xs tracking-widest">
+          <div className="border border-green/20 p-4">
+            <p className="text-gray">X</p>
+            <p className="text-green mt-1">{player.xHandle ? `@${player.xHandle}` : "NOT CONNECTED"}</p>
+          </div>
+          <div className="border border-green/20 p-4">
+            <p className="text-gray">WAITLIST WALLET</p>
+            <p className="text-green mt-1">
+              {officialWallet ? formatAddress(officialWallet) : "NOT JOINED"}
+            </p>
+          </div>
+          <div className="border border-green/20 p-4 sm:col-span-2">
+            <p className="text-gray">CONNECTED WALLET</p>
+            <p className={`mt-1 ${match ? "text-green" : "text-white"}`}>
+              {isConnected && address ? formatAddress(address) : "NOT CONNECTED"}
+            </p>
+            {joined && officialWallet && !match && (
+              <p className="mt-3 text-[10px] text-green leading-relaxed">
+                SWITCH WALLET TO {formatAddress(officialWallet)}. THAT ADDRESS WAS SAVED ON WAITLIST AND WILL BE USED AT MINT.
+              </p>
+            )}
           </div>
         </div>
 
         <div>
-          <p className="font-tech text-[10px] tracking-widest text-gray mb-3">1. CONNECT X</p>
+          <p className="font-tech text-[10px] tracking-widest text-gray mb-3">CONNECT X</p>
           {player.xHandle ? (
             <a href={`https://x.com/${player.xHandle}`} target="_blank" rel="noreferrer" className="font-tech text-green text-sm tracking-widest">
               @{player.xHandle}
@@ -96,12 +114,16 @@ export default function ProfilePage() {
           {xMsg && <p className="mt-2 font-tech text-[10px] text-green tracking-widest">{xMsg}</p>}
         </div>
 
+        {joined && (
+          <div>
+            <p className="font-tech text-[10px] tracking-widest text-gray mb-3">CONNECT WALLET</p>
+            <ConnectWallet />
+          </div>
+        )}
+
         {player.xHandle && (
           <div>
             <p className="font-tech text-[10px] tracking-widest text-gray mb-3">REFERRAL</p>
-            <p className="font-tech text-[10px] text-gray tracking-widest mb-2">
-              +200 WHEN INVITEE JOINS WAITLIST (X + WALLET + EMAIL UNIQUE)
-            </p>
             <button
               type="button"
               onClick={() => {
@@ -116,17 +138,8 @@ export default function ProfilePage() {
         )}
 
         <div>
-          <p className="font-tech text-[10px] tracking-widest text-gray mb-3">2–3. WAITLIST</p>
+          <p className="font-tech text-[10px] tracking-widest text-gray mb-3">WAITLIST</p>
           <WaitlistForm xHandle={player.xHandle} />
-        </div>
-
-        <div>
-          <p className="font-tech text-[10px] tracking-widest text-gray mb-3">WALLET CONNECT (OPTIONAL NOW)</p>
-          <ConnectWallet />
-          {isConnected && address && (
-            <p className="mt-2 font-tech text-[10px] text-green tracking-widest">{formatAddress(address)}</p>
-          )}
-          {lockMsg && <p className="mt-2 font-tech text-[10px] text-green tracking-widest">{lockMsg}</p>}
         </div>
 
         <div>
