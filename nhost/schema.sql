@@ -1,8 +1,4 @@
--- ============================================================
--- PRAY FOR PLAGUES — Nhost / Hasura SQL
--- Paste ALL of this into Nhost Dashboard → Database → SQL Editor
--- Then: Hasura → Data → Track tables: waitlist, profiles, task_completions
--- ============================================================
+-- Paste into Nhost → Database → SQL Editor, then track tables in Hasura.
 
 create extension if not exists pgcrypto;
 
@@ -15,11 +11,10 @@ create table if not exists public.waitlist (
   collection text not null default 'pray-for-plagues',
   status text not null default 'pending',
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  constraint waitlist_email_key unique (email),
+  constraint waitlist_wallet_key unique (wallet)
 );
-
-create unique index if not exists waitlist_email_key on public.waitlist (lower(email));
-create unique index if not exists waitlist_wallet_key on public.waitlist (lower(wallet));
 
 create table if not exists public.profiles (
   id uuid primary key default gen_random_uuid(),
@@ -28,10 +23,9 @@ create table if not exists public.profiles (
   x_handle text,
   points integer not null default 0,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  constraint profiles_wallet_key unique (wallet)
 );
-
-create unique index if not exists profiles_wallet_key on public.profiles (lower(wallet));
 
 create table if not exists public.task_completions (
   id uuid primary key default gen_random_uuid(),
@@ -80,5 +74,3 @@ drop policy if exists "anon select tasks" on public.task_completions;
 create policy "anon select tasks"
   on public.task_completions for select to anon, authenticated
   using (true);
-
-comment on table public.waitlist is 'NFT OpenSea allowlist / waitlist';
