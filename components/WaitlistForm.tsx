@@ -1,9 +1,11 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { completeTask } from "@/lib/points";
+import Link from "next/link";
+import { completeTask, loadPlayer } from "@/lib/points";
 import { captureRefFromUrl } from "@/lib/referral";
 import SocialTasks from "@/components/SocialTasks";
+import { loadWaitlist, saveWaitlist } from "@/lib/waitlist-local";
 
 const WALLET_RE = /^0x[a-fA-F0-9]{40}$/;
 
@@ -14,6 +16,10 @@ export default function WaitlistForm({ xHandle }: { xHandle?: string | null }) {
   const [refLocked, setRefLocked] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [message, setMessage] = useState("");
+  const [joined, setJoined] = useState(false);
+  const [lockedWallet, setLockedWallet] = useState("");
+
+  const handle = xHandle || loadPlayer().xHandle;
 
   useEffect(() => {
     const captured = captureRefFromUrl();
@@ -21,13 +27,38 @@ export default function WaitlistForm({ xHandle }: { xHandle?: string | null }) {
       setRefCode(captured);
       setRefLocked(true);
     }
-  }, []);
+    const local = loadWaitlist();
+    if (local.joined) {
+      setJoined(true);
+      setLockedWallet(local.wallet || "");
+      setStatus("ok");
+    }
+    const x = handle;
+    if (x) {
+      fetch(`/api/waitlist?x=${encodeURIComponent(x)}`)
+        .then((r) => r.json())
+        .then((json) => {
+          if (json.entry) {
+            saveWaitlist({
+              joined: true,
+              wallet: json.entry.wallet,
+              xHandle: json.entry.x_handle,
+              email: json.entry.email,
+            });
+            setJoined(true);
+            setLockedWallet(json.entry.wallet || "");
+            setStatus("ok");
+          }
+        })
+        .catch(() => {});
+    }
+  }, [handle]);
 
-  const ready = Boolean(xHandle);
+  const ready = Boolean(handle);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!xHandle) {
+    if (!handle) {
       setStatus("error");
       setMessage("CONNECT X FIRST.");
       return;
@@ -47,24 +78,47 @@ export default function WaitlistForm({ xHandle }: { xHandle?: string | null }) {
         body: JSON.stringify({
           email: email.trim().toLowerCase(),
           wallet: w,
-          xHandle,
+          xHandle: handle,
           referredBy: (refCode || captureRefFromUrl()).replace(/^@/, "").trim().toLowerCase() || undefined,
         }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Failed");
-      completeTask("waitlist", { wallet: w, xHandle });
+      completeTask("waitlist", { wallet: w, xHandle: handle });
+      saveWaitlist({ joined: true, wallet: w, xHandle: handle, email: email.trim().toLowerCase() });
+      setJoined(true);
+      setLockedWallet(w);
       setStatus("ok");
       setMessage(
         json.referralAwarded
           ? "JOINED. REFERRAL COUNTED +200 TO INVITER."
-          : "LOCKED. 1 X / 1 WALLET / 1 EMAIL."
+          : "YOU ARE ON THE WAITLIST."
       );
+      window.dispatchEvent(new Event("pfp-waitlist"));
     } catch (err) {
       setStatus("error");
       setMessage(err instanceof Error ? err.message.toUpperCase() : "FAILED.");
     }
   };
+
+  if (joined) {
+    return (
+      <div className="flex flex-col gap-4">
+        <p className="font-bangers text-2xl text-green text-aura tracking-widest">YOU ARE ON THE WAITLIST</p>
+        {lockedWallet && (
+          <p className="font-tech text-[10px] text-green tracking-widest">
+            LOCKED WALLET {lockedWallet.slice(0, 6)}...{lockedWallet.slice(-4)}
+          </p>
+        )}
+        <p className="font-tech text-[10px] text-gray tracking-widest">
+          CONNECT THAT WALLET ONLY. CLIMB RANK ON TASK.
+        </p>
+        <Link href="/task" className="px-6 py-3 bg-green text-black font-tech text-xs tracking-widest text-center">
+          OPEN TASK
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full flex flex-col gap-4">
@@ -84,7 +138,7 @@ export default function WaitlistForm({ xHandle }: { xHandle?: string | null }) {
       )}
 
       {ready && (
-        <p className="font-tech text-[10px] text-green tracking-widest">X CONNECTED @{xHandle}</p>
+        <p className="font-tech text-[10px] text-green tracking-widest">X CONNECTED @{handle}</p>
       )}
 
       <SocialTasks enabled={ready} />
@@ -92,7 +146,7 @@ export default function WaitlistForm({ xHandle }: { xHandle?: string | null }) {
       <form onSubmit={onSubmit} className="w-full flex flex-col gap-3">
         <input
           value={wallet}
-          disabled={!ready || status === "ok"}
+          disabled={!ready}
           onChange={(e) => setWallet(e.target.value)}
           placeholder="WALLET 0x..."
           className="w-full px-4 py-3 bg-black/80 border border-green/30 text-green font-tech text-sm tracking-widest outline-none focus:border-green box-aura disabled:opacity-40"
@@ -100,15 +154,15 @@ export default function WaitlistForm({ xHandle }: { xHandle?: string | null }) {
         <input
           type="email"
           required
-          disabled={!ready || status === "ok"}
+          disabled={!ready}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="EMAIL"
           className="w-full px-4 py-3 bg-black/80 border border-green/30 text-green font-tech text-sm tracking-widest uppercase outline-none focus:border-green box-aura disabled:opacity-40"
         />
         <input
-          readOnly={refLocked || status === "ok"}
-          disabled={(!ready && !refLocked) || status === "ok"}
+          readOnly={refLocked}
+          disabled={!ready && !refLocked}
           value={refCode}
           onChange={(e) => {
             if (!refLocked) setRefCode(e.target.value);
@@ -121,10 +175,10 @@ export default function WaitlistForm({ xHandle }: { xHandle?: string | null }) {
         )}
         <button
           type="submit"
-          disabled={!ready || status === "loading" || status === "ok"}
+          disabled={!ready || status === "loading"}
           className="px-8 py-3 bg-green text-black font-tech font-bold text-sm tracking-[0.2em] hover:bg-green-bright transition-colors uppercase box-aura disabled:opacity-50"
         >
-          {status === "loading" ? "SAVING..." : status === "ok" ? "JOINED" : "JOIN WAITLIST"}
+          {status === "loading" ? "SAVING..." : "JOIN WAITLIST"}
         </button>
         {message && (
           <p className={`font-tech text-xs tracking-widest ${status === "ok" ? "text-green" : "text-red-500"}`}>

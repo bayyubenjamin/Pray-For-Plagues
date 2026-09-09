@@ -7,6 +7,7 @@ import { LogOut, Copy, Check, User } from "lucide-react";
 import { formatAddress } from "@/lib/utils";
 import { robinhoodChain } from "@/lib/config";
 import { completeTask } from "@/lib/points";
+import { loadWaitlist } from "@/lib/waitlist-local";
 
 export default function ConnectWallet({ compact }: { compact?: boolean }) {
   const { address, isConnected } = useAccount();
@@ -16,15 +17,42 @@ export default function ConnectWallet({ compact }: { compact?: boolean }) {
   const { switchChain, isPending: isSwitching } = useSwitchChain();
   const [showDropdown, setShowDropdown] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [joined, setJoined] = useState(false);
+  const [locked, setLocked] = useState("");
+  const [mismatch, setMismatch] = useState("");
+
+  const refreshGate = () => {
+    const w = loadWaitlist();
+    setJoined(w.joined);
+    setLocked((w.wallet || "").toLowerCase());
+  };
+
+  useEffect(() => {
+    refreshGate();
+    const onJoin = () => refreshGate();
+    window.addEventListener("pfp-waitlist", onJoin);
+    window.addEventListener("storage", onJoin);
+    return () => {
+      window.removeEventListener("pfp-waitlist", onJoin);
+      window.removeEventListener("storage", onJoin);
+    };
+  }, []);
 
   const onRh = chainId === robinhoodChain.id;
 
   useEffect(() => {
-    if (isConnected && address) {
-      completeTask("connect_wallet", { wallet: address });
-      if (onRh) completeTask("robinhood_chain", { wallet: address });
+    if (!isConnected || !address) return;
+    if (locked && address.toLowerCase() !== locked) {
+      setMismatch(`USE ${locked.slice(0, 6)}...${locked.slice(-4)} ONLY`);
+      disconnect();
+      return;
     }
-  }, [isConnected, address, onRh]);
+    setMismatch("");
+    completeTask("connect_wallet", { wallet: address });
+    if (onRh) completeTask("robinhood_chain", { wallet: address });
+  }, [isConnected, address, onRh, locked, disconnect]);
+
+  if (!joined) return null;
 
   const handleConnect = () => {
     const injected = connectors.find((c) => c.id === "injected") ?? connectors[0];
@@ -47,7 +75,6 @@ export default function ConnectWallet({ compact }: { compact?: boolean }) {
         >
           {onRh ? formatAddress(address) : compact ? "WRONG NET" : "SWITCH NETWORK"}
         </button>
-
         {showDropdown && (
           <div className="absolute right-0 mt-2 w-52 bg-deep border border-green/30 panel-border z-50">
             <div className="p-2 border-b border-green/20 text-[10px] text-gray uppercase tracking-widest">
@@ -56,35 +83,25 @@ export default function ConnectWallet({ compact }: { compact?: boolean }) {
             {!onRh && (
               <button
                 onClick={() => switchChain({ chainId: robinhoodChain.id })}
-                className="w-full text-left px-4 py-3 text-xs text-green hover:bg-darkGreen transition-colors"
+                className="w-full text-left px-4 py-3 text-xs text-green hover:bg-darkGreen"
               >
                 {isSwitching ? "SWITCHING..." : "SWITCH TO ROBINHOOD"}
               </button>
             )}
-            <Link
-              href="/profile"
-              onClick={() => setShowDropdown(false)}
-              className="w-full text-left px-4 py-3 text-xs text-white hover:bg-darkGreen transition-colors flex items-center justify-between"
-            >
-              PROFILE
-              <User size={14} />
+            <Link href="/profile" onClick={() => setShowDropdown(false)} className="w-full text-left px-4 py-3 text-xs text-white hover:bg-darkGreen flex items-center justify-between">
+              PROFILE <User size={14} />
             </Link>
-            <button
-              onClick={handleCopy}
-              className="w-full text-left px-4 py-3 text-xs text-white hover:bg-darkGreen transition-colors flex items-center justify-between"
-            >
-              COPY ADDRESS
-              {copied ? <Check size={14} className="text-green" /> : <Copy size={14} />}
+            <button onClick={handleCopy} className="w-full text-left px-4 py-3 text-xs text-white hover:bg-darkGreen flex items-center justify-between">
+              COPY ADDRESS {copied ? <Check size={14} className="text-green" /> : <Copy size={14} />}
             </button>
             <button
               onClick={() => {
                 disconnect();
                 setShowDropdown(false);
               }}
-              className="w-full text-left px-4 py-3 text-xs text-red-500 hover:bg-red-500/10 transition-colors flex items-center justify-between"
+              className="w-full text-left px-4 py-3 text-xs text-red-500 hover:bg-red-500/10 flex items-center justify-between"
             >
-              DISCONNECT
-              <LogOut size={14} />
+              DISCONNECT <LogOut size={14} />
             </button>
           </div>
         )}
@@ -93,12 +110,15 @@ export default function ConnectWallet({ compact }: { compact?: boolean }) {
   }
 
   return (
-    <button
-      onClick={handleConnect}
-      disabled={isPending}
-      className="px-4 py-2 border border-green text-green bg-black hover:bg-darkGreen font-tech uppercase text-xs sm:text-sm tracking-wider box-aura"
-    >
-      {isPending ? "CONNECTING..." : compact ? "CONNECT" : "CONNECT WALLET"}
-    </button>
+    <div className="flex flex-col items-end gap-1">
+      <button
+        onClick={handleConnect}
+        disabled={isPending}
+        className="px-4 py-2 border border-green text-green bg-black hover:bg-darkGreen font-tech uppercase text-xs sm:text-sm tracking-wider box-aura"
+      >
+        {isPending ? "CONNECTING..." : "CONNECT WALLET"}
+      </button>
+      {mismatch && <p className="font-tech text-[9px] text-red-500 tracking-widest">{mismatch}</p>}
+    </div>
   );
 }
