@@ -1,4 +1,5 @@
--- Paste into Nhost → Database → SQL Editor, then track tables in Hasura.
+-- Paste into Nhost → Database → SQL Editor
+-- Do NOT use roles anon/authenticated here — those are Hasura roles, not Postgres.
 
 create extension if not exists pgcrypto;
 
@@ -41,36 +42,30 @@ alter table public.profiles enable row level security;
 alter table public.task_completions enable row level security;
 
 drop policy if exists "anon insert waitlist" on public.waitlist;
-create policy "anon insert waitlist"
-  on public.waitlist for insert to anon, authenticated
-  with check (wallet is not null and email is not null);
-
 drop policy if exists "anon select own waitlist" on public.waitlist;
-create policy "anon select own waitlist"
-  on public.waitlist for select to anon, authenticated
-  using (true);
-
 drop policy if exists "anon upsert profiles" on public.profiles;
-create policy "anon upsert profiles"
-  on public.profiles for insert to anon, authenticated
-  with check (wallet is not null);
-
 drop policy if exists "anon update profiles" on public.profiles;
-create policy "anon update profiles"
-  on public.profiles for update to anon, authenticated
-  using (true);
-
 drop policy if exists "anon select profiles" on public.profiles;
-create policy "anon select profiles"
-  on public.profiles for select to anon, authenticated
-  using (true);
-
 drop policy if exists "anon insert tasks" on public.task_completions;
-create policy "anon insert tasks"
-  on public.task_completions for insert to anon, authenticated
-  with check (true);
-
 drop policy if exists "anon select tasks" on public.task_completions;
-create policy "anon select tasks"
-  on public.task_completions for select to anon, authenticated
-  using (true);
+
+create policy "waitlist_insert" on public.waitlist
+  for insert with check (wallet is not null and email is not null);
+
+create policy "waitlist_select" on public.waitlist
+  for select using (true);
+
+create policy "profiles_insert" on public.profiles
+  for insert with check (wallet is not null);
+
+create policy "profiles_update" on public.profiles
+  for update using (true);
+
+create policy "profiles_select" on public.profiles
+  for select using (true);
+
+create policy "tasks_insert" on public.task_completions
+  for insert with check (true);
+
+create policy "tasks_select" on public.task_completions
+  for select using (true);
