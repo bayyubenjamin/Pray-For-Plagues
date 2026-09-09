@@ -4,7 +4,6 @@ import { FormEvent, useState } from "react";
 import { useAccount } from "wagmi";
 import ConnectWallet from "@/components/ConnectWallet";
 import { completeTask, loadPlayer } from "@/lib/points";
-import { OPENSEA_COLLECTION_URL } from "@/lib/nhost";
 
 export default function WaitlistForm() {
   const { address, isConnected } = useAccount();
@@ -44,7 +43,11 @@ export default function WaitlistForm() {
 
       completeTask("waitlist", { wallet: address });
       setStatus("ok");
-      setMessage("ALLOWLISTED. WALLET LOCKED FOR MINT.");
+      setMessage(
+        json.stored === "nhost"
+          ? "WAITLIST SAVED. WALLET LOCKED."
+          : "WAITLIST SAVED ON THIS DEVICE. ADD NHOST ENV TO SYNC SERVER."
+      );
       setEmail("");
     } catch (err) {
       setStatus("error");
@@ -55,17 +58,9 @@ export default function WaitlistForm() {
   return (
     <div className="w-full flex flex-col gap-4">
       <p className="font-tech text-[10px] text-gray tracking-widest leading-relaxed">
-        NFT ALLOWLIST — WALLET ON ROBINHOOD CHAIN GETS MINT ACCESS.
-        SAME WALLET SHOULD MATCH YOUR OPENSEA ACCOUNT.
+        SITE ALLOWLIST — CONNECT WALLET, LINK X, THEN LOCK EMAIL.
+        UTILITY (UPGRADE / $PLAGUES) COMES AFTER MINT.
       </p>
-      <a
-        href={OPENSEA_COLLECTION_URL}
-        target="_blank"
-        rel="noreferrer"
-        className="font-tech text-[10px] text-green tracking-widest border-b border-green w-fit"
-      >
-        VIEW COLLECTION ON OPENSEA
-      </a>
 
       {!isConnected && (
         <div className="flex flex-col gap-3">
@@ -77,7 +72,7 @@ export default function WaitlistForm() {
       <form onSubmit={onSubmit} className="w-full flex flex-col gap-3">
         {address && (
           <p className="font-tech text-[10px] text-green tracking-widest">
-            MINT WALLET: {address.slice(0, 6)}...{address.slice(-4)}
+            WALLET: {address.slice(0, 6)}...{address.slice(-4)}
           </p>
         )}
         <input
@@ -93,7 +88,7 @@ export default function WaitlistForm() {
           disabled={status === "loading" || !isConnected}
           className="px-8 py-3 bg-green text-black font-tech font-bold text-sm tracking-[0.2em] hover:bg-green-bright transition-colors uppercase box-aura disabled:opacity-50"
         >
-          {status === "loading" ? "LOCKING SLOT..." : "JOIN NFT WAITLIST"}
+          {status === "loading" ? "SAVING..." : "JOIN WAITLIST"}
         </button>
         {message && (
           <p className={`font-tech text-xs tracking-widest ${status === "ok" ? "text-green" : "text-red-500"}`}>

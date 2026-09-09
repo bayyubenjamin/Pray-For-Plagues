@@ -1,9 +1,17 @@
 import { nhostGraphqlUrl } from "./nhost";
 
+export function getAdminSecret() {
+  return (
+    process.env.NHOST_ADMIN_SECRET ||
+    process.env.HASURA_GRAPHQL_ADMIN_SECRET ||
+    ""
+  );
+}
+
 export async function nhostAdminRequest<T>(query: string, variables: Record<string, unknown>) {
-  const secret = process.env.NHOST_ADMIN_SECRET;
+  const secret = getAdminSecret();
   if (!nhostGraphqlUrl) {
-    throw new Error("Nhost GraphQL URL missing. Set NEXT_PUBLIC_NHOST_SUBDOMAIN + REGION.");
+    throw new Error("Nhost is not configured");
   }
 
   const headers: Record<string, string> = {

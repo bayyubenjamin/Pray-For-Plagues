@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isNhostConfigured } from "@/lib/nhost";
 import { nhostAdminRequest } from "@/lib/nhost-server";
 
 const UPSERT = `
@@ -28,21 +29,6 @@ const UPSERT = `
       email
       status
     }
-    insert_profiles_one(
-      object: {
-        wallet: $wallet,
-        email: $email,
-        x_handle: $x_handle,
-        points: 150
-      },
-      on_conflict: {
-        constraint: profiles_wallet_key,
-        update_columns: [email, x_handle, updated_at]
-      }
-    ) {
-      id
-      points
-    }
   }
 `;
 
@@ -64,15 +50,29 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Connect wallet first" }, { status: 400 });
     }
 
+    if (!isNhostConfigured) {
+      return NextResponse.json({
+        ok: true,
+        stored: "local",
+        wallet,
+        email,
+        xHandle,
+      });
+    }
+
     const data = await nhostAdminRequest<{ insert_waitlist_one: { id: string } }>(UPSERT, {
       email,
       wallet,
       x_handle: xHandle,
-      source: "opensea",
-      collection: process.env.NEXT_PUBLIC_OPENSEA_SLUG ?? "pray-for-plagues",
+      source: "site",
+      collection: "pray-for-plagues",
     });
 
-    return NextResponse.json({ ok: true, id: data.insert_waitlist_one?.id });
+    return NextResponse.json({
+      ok: true,
+      stored: "nhost",
+      id: data.insert_waitlist_one?.id,
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Waitlist failed";
     return NextResponse.json({ error: message }, { status: 500 });
