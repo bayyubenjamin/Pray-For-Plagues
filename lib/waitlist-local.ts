@@ -21,3 +21,7 @@ export function loadWaitlist(): LocalWaitlist {
 export function saveWaitlist(data: LocalWaitlist) {
   localStorage.setItem(KEY, JSON.stringify(data));
 }
+
+export function clearWaitlist() {
+  localStorage.removeItem(KEY);
+}
