@@ -10,12 +10,12 @@ export const TASKS = [
   { id: "visit_lab", label: "ENTER THE LAB", points: 50, hint: "Open Upgrade once" },
 ] as const;
 
-export type TaskId = (typeof TASKS)[number]["id"];
+export type TaskId = (typeof TASKS)[number]["id"] | string;
 
 export type PlayerState = {
   wallet?: string;
   xHandle?: string;
-  completed: TaskId[];
+  completed: string[];
   points: number;
 };
 
@@ -50,6 +50,19 @@ export function completeTask(id: TaskId, extra?: Partial<PlayerState>): PlayerSt
     ...extra,
     completed: [...current.completed, id],
     points: current.points + (task?.points ?? 0),
+  };
+  savePlayer(next);
+  syncRank(next);
+  return next;
+}
+
+export function completeCustomTask(id: string, points: number): PlayerState {
+  const current = loadPlayer();
+  if (current.completed.includes(id)) return current;
+  const next: PlayerState = {
+    ...current,
+    completed: [...current.completed, id],
+    points: current.points + points,
   };
   savePlayer(next);
   syncRank(next);
