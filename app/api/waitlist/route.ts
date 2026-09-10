@@ -85,7 +85,8 @@ export async function POST(req: Request) {
     const email = String(body.email ?? "").trim().toLowerCase();
     const wallet = normalizeWallet(String(body.wallet ?? ""));
     const xHandle = String(body.xHandle ?? "").replace(/^@/, "").trim().toLowerCase();
-    const referredBy = String(body.referredBy ?? "").replace(/^@/, "").trim().toLowerCase();
+    let referredBy = String(body.referredBy ?? "").replace(/^@/, "").trim().toLowerCase();
+    if (referredBy && referredBy === xHandle) referredBy = "";
 
     if (!xHandle) return NextResponse.json({ error: "Connect X first" }, { status: 400 });
     if (!isAddress(wallet)) return NextResponse.json({ error: "Paste a valid wallet 0x..." }, { status: 400 });
@@ -94,9 +95,6 @@ export async function POST(req: Request) {
     }
     if (!isNhostConfigured) {
       return NextResponse.json({ error: "Nhost backend is not configured" }, { status: 503 });
-    }
-    if (referredBy && referredBy === xHandle) {
-      return NextResponse.json({ error: "Cannot refer yourself" }, { status: 400 });
     }
 
     const existing = await lookup(xHandle, wallet, email);
@@ -111,9 +109,10 @@ export async function POST(req: Request) {
     }
 
     let validRef: string | null = null;
-    if (referredBy) {
+    if (referredBy && referredBy !== xHandle) {
       const ref = await nhostAdminRequest<{ waitlist: { x_handle: string }[] }>(FIND_REF, { x: referredBy });
       if (ref.waitlist[0]) validRef = ref.waitlist[0].x_handle.toLowerCase();
+      if (validRef === xHandle) validRef = null;
     }
 
     const data = await nhostAdminRequest<{ insert_waitlist_one: { id: string } }>(INSERT, {
