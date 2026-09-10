@@ -6,7 +6,7 @@ import { useAccount, useConnect, useDisconnect, useChainId, useSwitchChain } fro
 import { LogOut, Copy, Check, User } from "lucide-react";
 import { formatAddress } from "@/lib/utils";
 import { robinhoodChain } from "@/lib/config";
-import { completeTask } from "@/lib/points";
+import { completeTask, loadPlayer } from "@/lib/points";
 import { loadWaitlist } from "@/lib/waitlist-local";
 
 export default function ConnectWallet({ compact }: { compact?: boolean }) {
@@ -21,6 +21,7 @@ export default function ConnectWallet({ compact }: { compact?: boolean }) {
   const [locked, setLocked] = useState("");
   const [mismatch, setMismatch] = useState("");
   const rejecting = useRef(false);
+  const saved = useRef("");
 
   const refreshGate = () => {
     const w = loadWaitlist();
@@ -45,6 +46,20 @@ export default function ConnectWallet({ compact }: { compact?: boolean }) {
       setMismatch("");
       completeTask("connect_wallet", { wallet: address });
       if (onRh) completeTask("robinhood_chain", { wallet: address });
+      const x = loadPlayer().xHandle || loadWaitlist().xHandle;
+      if (x && saved.current !== address.toLowerCase()) {
+        saved.current = address.toLowerCase();
+        fetch("/api/profile", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            xHandle: x,
+            wallet: locked,
+            connectedWallet: address.toLowerCase(),
+            points: loadPlayer().points,
+          }),
+        }).catch(() => {});
+      }
       return;
     }
     rejecting.current = true;
@@ -113,11 +128,7 @@ export default function ConnectWallet({ compact }: { compact?: boolean }) {
 
   return (
     <div className="flex flex-col items-end gap-1 max-w-[220px]">
-      <button
-        onClick={handleConnect}
-        disabled={isPending}
-        className="px-4 py-2 border border-green text-green bg-black hover:bg-darkGreen font-tech uppercase text-xs sm:text-sm tracking-wider box-aura"
-      >
+      <button onClick={handleConnect} disabled={isPending} className="px-4 py-2 border border-green text-green bg-black hover:bg-darkGreen font-tech uppercase text-xs sm:text-sm tracking-wider box-aura">
         {isPending ? "CONNECTING..." : "CONNECT WALLET"}
       </button>
       {mismatch && <p className="font-tech text-[9px] text-red-500 tracking-widest text-right">{mismatch}</p>}
