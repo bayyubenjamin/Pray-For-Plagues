@@ -56,6 +56,19 @@ export function completeTask(id: TaskId, extra?: Partial<PlayerState>): PlayerSt
   return next;
 }
 
+export function uncompleteTask(id: TaskId): PlayerState {
+  const current = loadPlayer();
+  if (!current.completed.includes(id)) return current;
+  const task = TASKS.find((t) => t.id === id);
+  const next: PlayerState = {
+    ...current,
+    completed: current.completed.filter((x) => x !== id),
+    points: Math.max(0, current.points - (task?.points ?? 0)),
+  };
+  savePlayer(next);
+  return next;
+}
+
 function syncRank(state: PlayerState) {
   if (typeof window === "undefined") return;
   if (!state.xHandle && !state.wallet) return;

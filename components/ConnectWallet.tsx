@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useAccount, useConnect, useDisconnect, useChainId, useSwitchChain } from "wagmi";
 import { LogOut, Copy, Check, User } from "lucide-react";
@@ -20,10 +20,11 @@ export default function ConnectWallet({ compact }: { compact?: boolean }) {
   const [joined, setJoined] = useState(false);
   const [locked, setLocked] = useState("");
   const [mismatch, setMismatch] = useState("");
+  const rejecting = useRef(false);
 
   const refreshGate = () => {
     const w = loadWaitlist();
-    setJoined(w.joined);
+    setJoined(Boolean(w.joined && w.wallet));
     setLocked((w.wallet || "").toLowerCase());
   };
 
@@ -31,30 +32,34 @@ export default function ConnectWallet({ compact }: { compact?: boolean }) {
     refreshGate();
     const onJoin = () => refreshGate();
     window.addEventListener("pfp-waitlist", onJoin);
-    window.addEventListener("storage", onJoin);
-    return () => {
-      window.removeEventListener("pfp-waitlist", onJoin);
-      window.removeEventListener("storage", onJoin);
-    };
+    return () => window.removeEventListener("pfp-waitlist", onJoin);
   }, []);
 
   const onRh = chainId === robinhoodChain.id;
 
   useEffect(() => {
+    if (!joined || !locked) return;
     if (!isConnected || !address) return;
-    if (locked && address.toLowerCase() !== locked) {
-      setMismatch(`USE ${locked.slice(0, 6)}...${locked.slice(-4)} ONLY`);
-      disconnect();
+    if (address.toLowerCase() === locked) {
+      rejecting.current = false;
+      setMismatch("");
+      completeTask("connect_wallet", { wallet: address });
+      if (onRh) completeTask("robinhood_chain", { wallet: address });
       return;
     }
-    setMismatch("");
-    completeTask("connect_wallet", { wallet: address });
-    if (onRh) completeTask("robinhood_chain", { wallet: address });
-  }, [isConnected, address, onRh, locked, disconnect]);
+    rejecting.current = true;
+    setMismatch(`WRONG WALLET. SWITCH TO ${locked.slice(0, 6)}...${locked.slice(-4)}`);
+    disconnect();
+  }, [isConnected, address, joined, locked, onRh, disconnect]);
 
   if (!joined) return null;
 
   const handleConnect = () => {
+    if (rejecting.current && address && locked && address.toLowerCase() !== locked) {
+      disconnect();
+      setMismatch(`WRONG WALLET. SWITCH ACCOUNT IN EXTENSION TO ${locked.slice(0, 6)}...${locked.slice(-4)} THEN CONNECT.`);
+      return;
+    }
     const injected = connectors.find((c) => c.id === "injected") ?? connectors[0];
     if (injected) connect({ connector: injected, chainId: robinhoodChain.id });
   };
@@ -66,12 +71,12 @@ export default function ConnectWallet({ compact }: { compact?: boolean }) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (isConnected && address) {
+  if (isConnected && address && (!locked || address.toLowerCase() === locked)) {
     return (
       <div className="relative">
         <button
           onClick={() => setShowDropdown((v) => !v)}
-          className="px-3 py-2 bg-darkGreen border border-green text-green font-tech hover:bg-green/10 transition-colors uppercase text-xs sm:text-sm tracking-wider"
+          className="px-3 py-2 bg-darkGreen border border-green text-green font-tech hover:bg-green/10 uppercase text-xs sm:text-sm tracking-wider"
         >
           {onRh ? formatAddress(address) : compact ? "WRONG NET" : "SWITCH NETWORK"}
         </button>
@@ -81,10 +86,7 @@ export default function ConnectWallet({ compact }: { compact?: boolean }) {
               {onRh ? "ROBINHOOD CHAIN" : "WRONG NETWORK"}
             </div>
             {!onRh && (
-              <button
-                onClick={() => switchChain({ chainId: robinhoodChain.id })}
-                className="w-full text-left px-4 py-3 text-xs text-green hover:bg-darkGreen"
-              >
+              <button onClick={() => switchChain({ chainId: robinhoodChain.id })} className="w-full text-left px-4 py-3 text-xs text-green hover:bg-darkGreen">
                 {isSwitching ? "SWITCHING..." : "SWITCH TO ROBINHOOD"}
               </button>
             )}
@@ -110,7 +112,7 @@ export default function ConnectWallet({ compact }: { compact?: boolean }) {
   }
 
   return (
-    <div className="flex flex-col items-end gap-1">
+    <div className="flex flex-col items-end gap-1 max-w-[220px]">
       <button
         onClick={handleConnect}
         disabled={isPending}
@@ -118,7 +120,7 @@ export default function ConnectWallet({ compact }: { compact?: boolean }) {
       >
         {isPending ? "CONNECTING..." : "CONNECT WALLET"}
       </button>
-      {mismatch && <p className="font-tech text-[9px] text-red-500 tracking-widest">{mismatch}</p>}
+      {mismatch && <p className="font-tech text-[9px] text-red-500 tracking-widest text-right">{mismatch}</p>}
     </div>
   );
 }
