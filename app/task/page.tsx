@@ -6,6 +6,7 @@ import WaitlistForm from "@/components/WaitlistForm";
 import { TASKS, completeTask, loadPlayer, type PlayerState } from "@/lib/points";
 import { saveRef } from "@/lib/referral";
 import { syncWaitlistFromServer } from "@/lib/sync-waitlist";
+import { setXSession } from "@/lib/x-session";
 
 type Row = { rank: number; xHandle: string; wallet: string; points: number };
 
@@ -24,13 +25,14 @@ export default function TaskPage() {
     const x = params.get("x");
     const handle = params.get("handle");
     if (x === "connected" && handle) {
+      setXSession(handle);
       completeTask("connect_x", { xHandle: handle });
       setXMsg("X CONNECTED");
       window.history.replaceState({}, "", "/task");
     }
     const p = loadPlayer();
     setPlayer(p);
-    syncWaitlistFromServer(p.xHandle).then(() => setPlayer(loadPlayer()));
+    syncWaitlistFromServer(handle || p.xHandle).then(() => setPlayer(loadPlayer()));
   }, []);
 
   useEffect(() => {
@@ -60,7 +62,6 @@ export default function TaskPage() {
           <div>
             <p className="font-tech text-[10px] tracking-widest text-gray">POINTS</p>
             <p className="font-bangers text-4xl text-green text-aura">{serverPts ?? player.points}</p>
-            <p className="font-tech text-[9px] text-gray tracking-widest">MAX {maxPts}+REF</p>
           </div>
           <div>
             <p className="font-tech text-[10px] tracking-widest text-gray">RANK</p>
@@ -71,9 +72,6 @@ export default function TaskPage() {
             <p className="font-bangers text-4xl text-green text-aura">{doneCount}/{TASKS.length}</p>
           </div>
         </div>
-        {player.xHandle && (
-          <p className="mt-4 text-center font-tech text-[10px] text-green tracking-widest">@{player.xHandle}</p>
-        )}
       </div>
 
       <section className="mt-8 border border-green/20 bg-black/50 p-5 panel-border">
@@ -84,10 +82,10 @@ export default function TaskPage() {
       <section className="mt-6 border border-green/20 bg-black/50 p-5 panel-border">
         <p className="font-tech text-[10px] tracking-widest text-gray mb-4">SOCIAL</p>
         {player.xHandle ? (
-          <p className="font-tech text-green text-sm tracking-widest">CONNECTED @{player.xHandle} \u00b7 +200</p>
+          <p className="font-tech text-green text-sm tracking-widest">CONNECTED @{player.xHandle}</p>
         ) : (
           <a href="/api/x/start" className="inline-block px-6 py-3 border border-green text-green font-tech text-xs tracking-widest hover:bg-darkGreen box-aura">
-            CONNECT X \u00b7 +200
+            CONNECT X
           </a>
         )}
         {xMsg && <p className="mt-2 font-tech text-[10px] text-green tracking-widest">{xMsg}</p>}
