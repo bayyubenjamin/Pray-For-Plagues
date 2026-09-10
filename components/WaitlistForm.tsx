@@ -30,10 +30,13 @@ export default function WaitlistForm({
   const handle = xHandle || loadPlayer().xHandle;
 
   useEffect(() => {
-    const captured = captureRefFromUrl();
+    const captured = captureRefFromUrl(handle);
     if (captured) {
       setRefCode(captured);
       setRefLocked(true);
+    } else {
+      setRefCode("");
+      setRefLocked(false);
     }
     setChecking(true);
     syncWaitlistFromServer(handle).then((row) => {
@@ -58,6 +61,7 @@ export default function WaitlistForm({
       setMessage("PASTE A VALID WALLET 0X.");
       return;
     }
+    const ref = captureRefFromUrl(handle);
     setStatus("loading");
     setMessage("");
     try {
@@ -68,7 +72,7 @@ export default function WaitlistForm({
           email: email.trim().toLowerCase(),
           wallet: w,
           xHandle: handle,
-          referredBy: (refCode || captureRefFromUrl()).replace(/^@/, "").trim().toLowerCase() || undefined,
+          referredBy: ref || undefined,
         }),
       });
       const json = await res.json();
