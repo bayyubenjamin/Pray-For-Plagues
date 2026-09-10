@@ -1,34 +1,25 @@
 import { completeTask, loadPlayer, savePlayer, uncompleteTask } from "./points";
-import { clearWaitlist, loadWaitlist, saveWaitlist, type LocalWaitlist } from "./waitlist-local";
+import { clearWaitlist, saveWaitlist, type LocalWaitlist } from "./waitlist-local";
 
-function logoutLocal() {
-  const player = loadPlayer();
-  uncompleteTask("waitlist");
+function wipeIdentity() {
+  const current = loadPlayer();
   savePlayer({
-    ...loadPlayer(),
-    xHandle: undefined,
-    wallet: undefined,
-    completed: loadPlayer().completed.filter((id) => id !== "connect_x" && id !== "waitlist" && id !== "connect_wallet" && id !== "robinhood_chain"),
+    completed: current.completed.filter(
+      (id) => !["connect_x", "waitlist", "connect_wallet", "robinhood_chain"].includes(id)
+    ),
+    points: 0,
   });
-  // recompute points simply from remaining tasks
-  const left = loadPlayer();
-  void player;
   clearWaitlist();
   saveWaitlist({ joined: false });
   if (typeof window !== "undefined") window.dispatchEvent(new Event("pfp-waitlist"));
-  return left;
 }
 
-export async function syncWaitlistFromServer(xHandle?: string | null): Promise<LocalWaitlist> {
-  const cached = loadWaitlist();
-
+export async function syncWaitlistFromServer(
+  xHandle?: string | null,
+  opts?: { keepFreshX?: boolean }
+): Promise<LocalWaitlist> {
   if (!xHandle) {
-    if (cached.joined) logoutLocal();
-    else {
-      clearWaitlist();
-      saveWaitlist({ joined: false });
-    }
-    if (typeof window !== "undefined") window.dispatchEvent(new Event("pfp-waitlist"));
+    wipeIdentity();
     return { joined: false };
   }
 
@@ -37,12 +28,9 @@ export async function syncWaitlistFromServer(xHandle?: string | null): Promise<L
     const json = await res.json();
 
     if (!json.entry) {
-      if (cached.joined) {
-        logoutLocal();
-      } else {
-        saveWaitlist({ joined: false });
-        uncompleteTask("waitlist");
-      }
+      uncompleteTask("waitlist");
+      saveWaitlist({ joined: false });
+      if (!opts?.keepFreshX) wipeIdentity();
       if (typeof window !== "undefined") window.dispatchEvent(new Event("pfp-waitlist"));
       return { joined: false };
     }
