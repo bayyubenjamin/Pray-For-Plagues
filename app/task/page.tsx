@@ -5,6 +5,7 @@ import SectionTitle from "@/components/SectionTitle";
 import WaitlistForm from "@/components/WaitlistForm";
 import { TASKS, completeTask, loadPlayer, type PlayerState } from "@/lib/points";
 import { saveRef } from "@/lib/referral";
+import { syncWaitlistFromServer } from "@/lib/sync-waitlist";
 
 type Row = { rank: number; xHandle: string; wallet: string; points: number };
 
@@ -15,8 +16,6 @@ export default function TaskPage() {
   const [rows, setRows] = useState<Row[]>([]);
   const [copied, setCopied] = useState(false);
   const [xMsg, setXMsg] = useState("");
-
-  const refresh = () => setPlayer(loadPlayer());
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -29,7 +28,9 @@ export default function TaskPage() {
       setXMsg("X CONNECTED");
       window.history.replaceState({}, "", "/task");
     }
-    refresh();
+    const p = loadPlayer();
+    setPlayer(p);
+    syncWaitlistFromServer(p.xHandle).then(() => setPlayer(loadPlayer()));
   }, []);
 
   useEffect(() => {
@@ -63,7 +64,7 @@ export default function TaskPage() {
           </div>
           <div>
             <p className="font-tech text-[10px] tracking-widest text-gray">RANK</p>
-            <p className="font-bangers text-4xl text-green text-aura">{rank ?? "—"}</p>
+            <p className="font-bangers text-4xl text-green text-aura">{rank ?? "\u2014"}</p>
           </div>
           <div>
             <p className="font-tech text-[10px] tracking-widest text-gray">TASKS</p>
@@ -76,47 +77,26 @@ export default function TaskPage() {
       </div>
 
       <section className="mt-8 border border-green/20 bg-black/50 p-5 panel-border">
-        <p className="font-tech text-[10px] tracking-widest text-gray mb-4">SOCIAL</p>
-        {player.xHandle ? (
-          <p className="font-tech text-green text-sm tracking-widest">CONNECTED @{player.xHandle} · +200</p>
-        ) : (
-          <a href="/api/x/start" className="inline-block px-6 py-3 border border-green text-green font-tech text-xs tracking-widest hover:bg-darkGreen box-aura">
-            CONNECT X · +200
-          </a>
-        )}
-        {xMsg && <p className="mt-2 font-tech text-[10px] text-green tracking-widest">{xMsg}</p>}
-        <ul className="mt-4 space-y-2">
-          {TASKS.filter((t) => t.id === "connect_x" || t.id === "connect_wallet" || t.id === "robinhood_chain" || t.id === "visit_lab").map((task) => {
-            const done = player.completed.includes(task.id);
-            return (
-              <li key={task.id} className="flex items-center justify-between border border-green/15 px-3 py-3 font-tech text-xs tracking-widest">
-                <span className={done ? "text-green" : "text-white"}>{done ? "\u2713 " : "\u2022 "}{task.label}</span>
-                <span className="text-green">+{task.points}</span>
-              </li>
-            );
-          })}
-        </ul>
+        <p className="font-tech text-[10px] tracking-widest text-gray mb-4">WAITLIST</p>
+        <WaitlistForm xHandle={player.xHandle} hideTaskLink />
       </section>
 
       <section className="mt-6 border border-green/20 bg-black/50 p-5 panel-border">
-        <p className="font-tech text-[10px] tracking-widest text-gray mb-4">WAITLIST</p>
-        <WaitlistForm xHandle={player.xHandle} />
+        <p className="font-tech text-[10px] tracking-widest text-gray mb-4">SOCIAL</p>
+        {player.xHandle ? (
+          <p className="font-tech text-green text-sm tracking-widest">CONNECTED @{player.xHandle} \u00b7 +200</p>
+        ) : (
+          <a href="/api/x/start" className="inline-block px-6 py-3 border border-green text-green font-tech text-xs tracking-widest hover:bg-darkGreen box-aura">
+            CONNECT X \u00b7 +200
+          </a>
+        )}
+        {xMsg && <p className="mt-2 font-tech text-[10px] text-green tracking-widest">{xMsg}</p>}
       </section>
 
       <section className="mt-6 border border-green/20 bg-black/50 p-5 panel-border">
         <p className="font-tech text-[10px] tracking-widest text-gray mb-3">REFERRAL</p>
-        <p className="font-tech text-[10px] text-gray tracking-widest mb-3">
-          +200 WHEN INVITEE COMPLETES WAITLIST (X + WALLET + EMAIL)
-        </p>
         {player.xHandle ? (
-          <button
-            type="button"
-            onClick={() => {
-              navigator.clipboard.writeText(refLink);
-              setCopied(true);
-            }}
-            className="w-full text-left px-4 py-3 border border-green/30 text-green font-tech text-[10px] tracking-widest break-all hover:bg-darkGreen"
-          >
+          <button type="button" onClick={() => { navigator.clipboard.writeText(refLink); setCopied(true); }} className="w-full text-left px-4 py-3 border border-green/30 text-green font-tech text-[10px] tracking-widest break-all hover:bg-darkGreen">
             {copied ? "COPIED" : refLink}
           </button>
         ) : (
@@ -137,9 +117,7 @@ export default function TaskPage() {
             </thead>
             <tbody>
               {rows.length === 0 && (
-                <tr>
-                  <td colSpan={3} className="px-5 py-6 text-gray text-[10px] tracking-widest">NO RANKS YET</td>
-                </tr>
+                <tr><td colSpan={3} className="px-5 py-6 text-gray text-[10px] tracking-widest">NO RANKS YET</td></tr>
               )}
               {rows.map((row) => (
                 <tr key={row.xHandle} className="border-b border-green/10">
