@@ -1,5 +1,6 @@
 import { completeTask, loadPlayer, savePlayer, uncompleteTask } from "./points";
 import { clearWaitlist, saveWaitlist, type LocalWaitlist } from "./waitlist-local";
+import { clearXSession, getXSession } from "./x-session";
 
 function wipeIdentity() {
   const current = loadPlayer();
@@ -11,15 +12,20 @@ function wipeIdentity() {
   });
   clearWaitlist();
   saveWaitlist({ joined: false });
+  clearXSession();
   if (typeof window !== "undefined") window.dispatchEvent(new Event("pfp-waitlist"));
 }
 
-export async function syncWaitlistFromServer(
-  xHandle?: string | null,
-  opts?: { keepFreshX?: boolean }
-): Promise<LocalWaitlist> {
+export async function syncWaitlistFromServer(xHandle?: string | null): Promise<LocalWaitlist> {
+  const session = getXSession();
+
   if (!xHandle) {
-    wipeIdentity();
+    if (!session) wipeIdentity();
+    else {
+      saveWaitlist({ joined: false });
+      uncompleteTask("waitlist");
+    }
+    if (typeof window !== "undefined") window.dispatchEvent(new Event("pfp-waitlist"));
     return { joined: false };
   }
 
@@ -30,7 +36,7 @@ export async function syncWaitlistFromServer(
     if (!json.entry) {
       uncompleteTask("waitlist");
       saveWaitlist({ joined: false });
-      if (!opts?.keepFreshX) wipeIdentity();
+      if (session !== xHandle.toLowerCase()) wipeIdentity();
       if (typeof window !== "undefined") window.dispatchEvent(new Event("pfp-waitlist"));
       return { joined: false };
     }
