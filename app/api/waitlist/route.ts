@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { isNhostConfigured } from "@/lib/nhost";
 import { nhostAdminRequest } from "@/lib/nhost-server";
 import { REFERRAL_POINTS } from "@/lib/referral";
+import { upsertProfile } from "@/lib/profile-upsert";
 
 const INSERT = `
   mutation InsertWaitlist(
@@ -127,6 +128,8 @@ export async function POST(req: Request) {
     if (validRef) {
       await nhostAdminRequest(AWARD, { x: validRef, pts: REFERRAL_POINTS });
     }
+
+    await upsertProfile({ xHandle, wallet, email, points: 150 });
 
     return NextResponse.json({
       ok: true,
