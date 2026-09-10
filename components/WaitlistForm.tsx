@@ -7,6 +7,7 @@ import { captureRefFromUrl } from "@/lib/referral";
 import SocialTasks from "@/components/SocialTasks";
 import { saveWaitlist } from "@/lib/waitlist-local";
 import { syncWaitlistFromServer } from "@/lib/sync-waitlist";
+import { getXSession } from "@/lib/x-session";
 
 const WALLET_RE = /^0x[a-fA-F0-9]{40}$/;
 
@@ -27,7 +28,7 @@ export default function WaitlistForm({
   const [lockedWallet, setLockedWallet] = useState("");
   const [checking, setChecking] = useState(true);
 
-  const handle = xHandle || loadPlayer().xHandle;
+  const handle = xHandle || loadPlayer().xHandle || getXSession();
 
   useEffect(() => {
     const captured = captureRefFromUrl(handle);
@@ -107,9 +108,7 @@ export default function WaitlistForm({
             LOCKED WALLET {lockedWallet.slice(0, 6)}...{lockedWallet.slice(-4)}
           </p>
         )}
-        <p className="font-tech text-[10px] text-gray tracking-widest">
-          CONNECT THAT WALLET ONLY. CLIMB RANK WITH TASKS.
-        </p>
+        <SocialTasks enabled />
         {!hideTaskLink && (
           <Link href="/task" className="px-6 py-3 bg-green text-black font-tech text-xs tracking-widest text-center">
             OPEN TASK

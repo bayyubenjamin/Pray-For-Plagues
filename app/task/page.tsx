@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import SectionTitle from "@/components/SectionTitle";
 import WaitlistForm from "@/components/WaitlistForm";
+import SocialTasks from "@/components/SocialTasks";
 import { TASKS, completeTask, loadPlayer, type PlayerState } from "@/lib/points";
 import { saveRef } from "@/lib/referral";
 import { syncWaitlistFromServer } from "@/lib/sync-waitlist";
-import { setXSession } from "@/lib/x-session";
+import { getXSession, setXSession } from "@/lib/x-session";
 
 type Row = { rank: number; xHandle: string; wallet: string; points: number };
 
@@ -30,13 +31,14 @@ export default function TaskPage() {
       setXMsg("X CONNECTED");
       window.history.replaceState({}, "", "/task");
     }
-    const p = loadPlayer();
-    setPlayer(p);
-    syncWaitlistFromServer(handle || p.xHandle).then(() => setPlayer(loadPlayer()));
+    const live = handle || getXSession() || loadPlayer().xHandle;
+    if (live) completeTask("connect_x", { xHandle: live });
+    setPlayer(loadPlayer());
+    syncWaitlistFromServer(live).then(() => setPlayer(loadPlayer()));
   }, []);
 
   useEffect(() => {
-    const x = loadPlayer().xHandle || "";
+    const x = loadPlayer().xHandle || getXSession();
     fetch(`/api/rank?x=${encodeURIComponent(x)}`)
       .then((r) => r.json())
       .then((json) => {
@@ -47,11 +49,10 @@ export default function TaskPage() {
       .catch(() => {});
   }, [player.xHandle, player.points]);
 
+  const handle = player.xHandle || getXSession();
   const doneCount = player.completed.length;
   const maxPts = TASKS.reduce((s, t) => s + t.points, 0);
-  const refLink = player.xHandle
-    ? `https://prayforplagues.xyz/task?ref=${encodeURIComponent(player.xHandle)}`
-    : "";
+  const refLink = handle ? `https://prayforplagues.xyz/task?ref=${encodeURIComponent(handle)}` : "";
 
   return (
     <div className="w-full max-w-4xl mx-auto px-4 py-12 pb-24">
@@ -76,24 +77,25 @@ export default function TaskPage() {
 
       <section className="mt-8 border border-green/20 bg-black/50 p-5 panel-border">
         <p className="font-tech text-[10px] tracking-widest text-gray mb-4">WAITLIST</p>
-        <WaitlistForm xHandle={player.xHandle} hideTaskLink />
+        <WaitlistForm xHandle={handle} hideTaskLink />
       </section>
 
       <section className="mt-6 border border-green/20 bg-black/50 p-5 panel-border">
-        <p className="font-tech text-[10px] tracking-widest text-gray mb-4">SOCIAL</p>
-        {player.xHandle ? (
-          <p className="font-tech text-green text-sm tracking-widest">CONNECTED @{player.xHandle}</p>
+        <p className="font-tech text-[10px] tracking-widest text-gray mb-4">SOCIAL TASKS</p>
+        {handle ? (
+          <p className="font-tech text-green text-sm tracking-widest mb-4">CONNECTED @{handle}</p>
         ) : (
-          <a href="/api/x/start" className="inline-block px-6 py-3 border border-green text-green font-tech text-xs tracking-widest hover:bg-darkGreen box-aura">
+          <a href="/api/x/start" className="inline-block mb-4 px-6 py-3 border border-green text-green font-tech text-xs tracking-widest hover:bg-darkGreen box-aura">
             CONNECT X
           </a>
         )}
-        {xMsg && <p className="mt-2 font-tech text-[10px] text-green tracking-widest">{xMsg}</p>}
+        {xMsg && <p className="mb-3 font-tech text-[10px] text-green tracking-widest">{xMsg}</p>}
+        <SocialTasks enabled={Boolean(handle)} />
       </section>
 
       <section className="mt-6 border border-green/20 bg-black/50 p-5 panel-border">
         <p className="font-tech text-[10px] tracking-widest text-gray mb-3">REFERRAL</p>
-        {player.xHandle ? (
+        {handle ? (
           <button type="button" onClick={() => { navigator.clipboard.writeText(refLink); setCopied(true); }} className="w-full text-left px-4 py-3 border border-green/30 text-green font-tech text-[10px] tracking-widest break-all hover:bg-darkGreen">
             {copied ? "COPIED" : refLink}
           </button>
