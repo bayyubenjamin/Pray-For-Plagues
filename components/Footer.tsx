@@ -12,11 +12,10 @@ export default function Footer() {
           <a href="#" className="hover:text-green transition-colors">X</a>
           <a href="#" className="hover:text-green transition-colors">OPENSEA</a>
           <a href="#" className="hover:text-green transition-colors">ROBINHOOD CHAIN</a>
-          <a href="#" className="hover:text-green transition-colors">DISCORD</a>
-          <Link href="/waitlist" className="hover:text-green transition-colors">WAITLIST</Link>
+         <Link href="/waitlist" className="hover:text-green transition-colors">WAITLIST</Link>
         </div>
         <div className="text-[10px] text-gray/50 uppercase">
-          ROBINHOOD CHAIN. WALLET + NHOST READY.
+          ROBINHOOD CHAIN.
         </div>
       </div>
     </footer>
