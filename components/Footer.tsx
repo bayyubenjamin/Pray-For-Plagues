@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Footer() {
   return (
     <footer className="w-full border-t border-green/10 bg-deep/80 py-8 z-10 relative">
@@ -11,9 +13,10 @@ export default function Footer() {
           <a href="#" className="hover:text-green transition-colors">OPENSEA</a>
           <a href="#" className="hover:text-green transition-colors">ROBINHOOD CHAIN</a>
           <a href="#" className="hover:text-green transition-colors">DISCORD</a>
+          <Link href="/waitlist" className="hover:text-green transition-colors">WAITLIST</Link>
         </div>
         <div className="text-[10px] text-gray/50 uppercase">
-          DEMO ENVIRONMENT. NO REAL CONTRACTS CONNECTED.
+          ROBINHOOD CHAIN. WALLET + NHOST READY.
         </div>
       </div>
     </footer>

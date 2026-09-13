@@ -1,63 +1,124 @@
 "use client";
-import { useState } from "react";
-import { formatAddress } from "@/lib/utils";
-import { LogOut, Copy, Check } from "lucide-react";
 
-export default function ConnectWallet() {
-  const [status, setStatus] = useState<"disconnected" | "connecting" | "connected">("disconnected");
-  const [address, setAddress] = useState<string>("");
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { useAccount, useConnect, useDisconnect, useChainId, useSwitchChain } from "wagmi";
+import { LogOut, Copy, Check, User } from "lucide-react";
+import { formatAddress } from "@/lib/utils";
+import { robinhoodChain } from "@/lib/config";
+import { completeTask, loadPlayer } from "@/lib/points";
+import { loadWaitlist } from "@/lib/waitlist-local";
+
+export default function ConnectWallet({ compact }: { compact?: boolean }) {
+  const { address, isConnected } = useAccount();
+  const chainId = useChainId();
+  const { connect, connectors, isPending } = useConnect();
+  const { disconnect } = useDisconnect();
+  const { switchChain, isPending: isSwitching } = useSwitchChain();
   const [showDropdown, setShowDropdown] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [joined, setJoined] = useState(false);
+  const [locked, setLocked] = useState("");
+  const [mismatch, setMismatch] = useState("");
+  const rejecting = useRef(false);
+  const saved = useRef("");
 
-  // Mock connection
+  const refreshGate = () => {
+    const w = loadWaitlist();
+    setJoined(Boolean(w.joined && w.wallet));
+    setLocked((w.wallet || "").toLowerCase());
+  };
+
+  useEffect(() => {
+    refreshGate();
+    const onJoin = () => refreshGate();
+    window.addEventListener("pfp-waitlist", onJoin);
+    return () => window.removeEventListener("pfp-waitlist", onJoin);
+  }, []);
+
+  const onRh = chainId === robinhoodChain.id;
+
+  useEffect(() => {
+    if (!joined || !locked) return;
+    if (!isConnected || !address) return;
+    if (address.toLowerCase() === locked) {
+      rejecting.current = false;
+      setMismatch("");
+      completeTask("connect_wallet", { wallet: address });
+      if (onRh) completeTask("robinhood_chain", { wallet: address });
+      const x = loadPlayer().xHandle || loadWaitlist().xHandle;
+      if (x && saved.current !== address.toLowerCase()) {
+        saved.current = address.toLowerCase();
+        fetch("/api/profile", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            xHandle: x,
+            wallet: locked,
+            connectedWallet: address.toLowerCase(),
+            points: loadPlayer().points,
+          }),
+        }).catch(() => {});
+      }
+      return;
+    }
+    rejecting.current = true;
+    setMismatch(`WRONG WALLET. SWITCH TO ${locked.slice(0, 6)}...${locked.slice(-4)}`);
+    disconnect();
+  }, [isConnected, address, joined, locked, onRh, disconnect]);
+
+  if (!joined) return null;
+
   const handleConnect = () => {
-    setStatus("connecting");
-    setTimeout(() => {
-      setStatus("connected");
-      setAddress("0x71C7656EC7ab88b098defB751B7401B5f6d8976F"); // Mock address
-    }, 1500);
+    if (rejecting.current && address && locked && address.toLowerCase() !== locked) {
+      disconnect();
+      setMismatch(`WRONG WALLET. SWITCH ACCOUNT IN EXTENSION TO ${locked.slice(0, 6)}...${locked.slice(-4)} THEN CONNECT.`);
+      return;
+    }
+    const injected = connectors.find((c) => c.id === "injected") ?? connectors[0];
+    if (injected) connect({ connector: injected, chainId: robinhoodChain.id });
   };
 
-  const handleDisconnect = () => {
-    setStatus("disconnected");
-    setAddress("");
-    setShowDropdown(false);
-  };
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(address);
+  const handleCopy = async () => {
+    if (!address) return;
+    await navigator.clipboard.writeText(address);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (status === "connected") {
+  if (isConnected && address && (!locked || address.toLowerCase() === locked)) {
     return (
       <div className="relative">
-        <button 
-          onClick={() => setShowDropdown(!showDropdown)}
-          className="px-4 py-2 bg-darkGreen border border-green text-green font-tech hover:bg-green/10 transition-colors uppercase text-sm tracking-wider"
+        <button
+          onClick={() => setShowDropdown((v) => !v)}
+          className="px-3 py-2 bg-darkGreen border border-green text-green font-tech hover:bg-green/10 uppercase text-xs sm:text-sm tracking-wider"
         >
-          {formatAddress(address)}
+          {onRh ? formatAddress(address) : compact ? "WRONG NET" : "SWITCH NETWORK"}
         </button>
-        
         {showDropdown && (
-          <div className="absolute right-0 mt-2 w-48 bg-deep border border-green/30 panel-border z-50">
-            <div className="p-2 border-b border-green/20 text-xs text-gray uppercase tracking-widest">
-              DEMO MODE
+          <div className="absolute right-0 mt-2 w-52 bg-deep border border-green/30 panel-border z-50">
+            <div className="p-2 border-b border-green/20 text-[10px] text-gray uppercase tracking-widest">
+              {onRh ? "ROBINHOOD CHAIN" : "WRONG NETWORK"}
             </div>
-            <button 
-              onClick={handleCopy}
-              className="w-full text-left px-4 py-3 text-sm text-white hover:bg-darkGreen transition-colors flex items-center justify-between"
-            >
-              COPY ADDRESS
-              {copied ? <Check size={14} className="text-green" /> : <Copy size={14} />}
+            {!onRh && (
+              <button onClick={() => switchChain({ chainId: robinhoodChain.id })} className="w-full text-left px-4 py-3 text-xs text-green hover:bg-darkGreen">
+                {isSwitching ? "SWITCHING..." : "SWITCH TO ROBINHOOD"}
+              </button>
+            )}
+            <Link href="/profile" onClick={() => setShowDropdown(false)} className="w-full text-left px-4 py-3 text-xs text-white hover:bg-darkGreen flex items-center justify-between">
+              PROFILE <User size={14} />
+            </Link>
+            <button onClick={handleCopy} className="w-full text-left px-4 py-3 text-xs text-white hover:bg-darkGreen flex items-center justify-between">
+              COPY ADDRESS {copied ? <Check size={14} className="text-green" /> : <Copy size={14} />}
             </button>
-            <button 
-              onClick={handleDisconnect}
-              className="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-red-500/10 transition-colors flex items-center justify-between"
+            <button
+              onClick={() => {
+                disconnect();
+                setShowDropdown(false);
+              }}
+              className="w-full text-left px-4 py-3 text-xs text-red-500 hover:bg-red-500/10 flex items-center justify-between"
             >
-              DISCONNECT
-              <LogOut size={14} />
+              DISCONNECT <LogOut size={14} />
             </button>
           </div>
         )}
@@ -65,13 +126,12 @@ export default function ConnectWallet() {
     );
   }
 
-return (
-    <button 
-      onClick={handleConnect}
-      disabled={status === "connecting"}
-      className="px-6 py-2 border border-green text-green bg-black hover:bg-darkGreen font-tech uppercase text-sm tracking-wider box-aura"
-    >
-      {status === "connecting" ? "CONNECTING..." : "CONNECT WALLET"}
-    </button>
+  return (
+    <div className="flex flex-col items-end gap-1 max-w-[220px]">
+      <button onClick={handleConnect} disabled={isPending} className="px-4 py-2 border border-green text-green bg-black hover:bg-darkGreen font-tech uppercase text-xs sm:text-sm tracking-wider box-aura">
+        {isPending ? "CONNECTING..." : "CONNECT WALLET"}
+      </button>
+      {mismatch && <p className="font-tech text-[9px] text-red-500 tracking-widest text-right">{mismatch}</p>}
+    </div>
   );
 }

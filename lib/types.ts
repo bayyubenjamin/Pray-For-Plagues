@@ -1,6 +1,8 @@
+export type Rarity = "COMMON" | "RARE" | "EPIC" | "LEGENDARY" | "MYTHIC";
+
 export interface AntidoteNFT {
   id: number;
-  rarity: "COMMON" | "RARE" | "EPIC" | "LEGENDARY" | "MYTHIC";
+  rarity: Rarity;
   level: number;
   purity: number;
   stability: number;
@@ -18,4 +20,18 @@ export interface StatProps {
   label: string;
   value: string;
   subValue?: string;
+}
+
+export interface WaitlistEntry {
+  id?: string;
+  email: string;
+  wallet?: string | null;
+  created_at?: string;
+}
+
+export interface UserProfile {
+  id?: string;
+  wallet: string;
+  display_name?: string | null;
+  email?: string | null;
 }

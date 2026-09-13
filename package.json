@@ -9,9 +9,11 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@nhost/nhost-js": "^4.8.0",
     "@tanstack/react-query": "^5.101.4",
     "autoprefixer": "^10.5.4",
     "clsx": "^2.1.1",
+    "graphql": "^16.11.0",
     "lucide-react": "^1.31.0",
     "next": "16.3.0",
     "postcss": "^8.5.26",

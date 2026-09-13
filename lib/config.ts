@@ -1,10 +1,24 @@
-import { createConfig, http } from 'wagmi';
-import { mainnet } from 'wagmi/chains';
+import { createConfig, http } from "wagmi";
+import { injected } from "wagmi/connectors";
+import { defineChain } from "viem";
 
-// Prepared for real integration later
-export const wagmiConfig = createConfig({
-  chains: [mainnet],
-  transports: {
-    [mainnet.id]: http(),
+export const robinhoodChain = defineChain({
+  id: 4663,
+  name: "Robinhood Chain",
+  nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+  rpcUrls: {
+    default: { http: ["https://rpc.mainnet.chain.robinhood.com"] },
   },
+  blockExplorers: {
+    default: { name: "Blockscout", url: "https://robinhoodchain.blockscout.com" },
+  },
+});
+
+export const wagmiConfig = createConfig({
+  chains: [robinhoodChain],
+  connectors: [injected({ shimDisconnect: true })],
+  transports: {
+    [robinhoodChain.id]: http("https://rpc.mainnet.chain.robinhood.com"),
+  },
+  ssr: true,
 });
