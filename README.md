@@ -4,11 +4,11 @@ Utility site for the Pray For Plagues NFT on Robinhood Chain.
 
 Production: [https://prayforplagues.xyz](https://prayforplagues.xyz)
 
-OpenSea is only the future secondary market. This repository is the product: identity, allowlist, points, referrals, and (later) mint / upgrade / `$PLAGUES`.
+OpenSea is only the future secondary market. This repository is the product: identity, allowlist, points, referrals, Vault briefing, and (later) mint / Lab mutation / `$PLAGUES`.
 
 ## Product rules
 
-Waitlist phase:
+Waitlist phase (CONTAGION):
 
 1. User connects **X** (OAuth 2.0 PKCE).
 2. User pastes an EVM **wallet** (`0x` + 40 hex). Extension connect is optional.
@@ -16,7 +16,25 @@ Waitlist phase:
 4. Backend enforces **1 X = 1 wallet = 1 email**.
 5. After join, that X account may only use the pasted wallet.
 
-Inventory and Upgrade UI is locked behind **SOON**. Lab CTA opens a waitlist modal instead of minting.
+Rank maps to a mint class (not a guaranteed rarity):
+
+- Rank 1–50 → **Patient Zero** (first extraction)
+- Rank 51–250 → **Quarantine** (GTD)
+- Rank 251+ → **Public** (FCFS)
+- Not on list → **Unlisted**
+
+`$PLAGUES` claim stays sealed until after mint. Lab CTA opens a waitlist modal instead of minting.
+
+## Outbreak protocol
+
+| Phase | Code | Status |
+| --- | --- | --- |
+| 0 | CONTAGION | Live waitlist |
+| 1 | ISOLATION | Snapshot |
+| 2 | OUTBREAK | Mint 2,000 vials |
+| 3 | MUTATION | Lab upgrade |
+| 4 | CURE | `$PLAGUES` claim |
+| 5 | PANDEMIC | Per-vial vault |
 
 ## Stack
 
@@ -34,11 +52,12 @@ Visual language (green glow, Bangers, lab chrome) must stay intact when editing 
 
 | Path | Role |
 | --- | --- |
-| `/` | Hero. **ENTER LAB** opens waitlist / “you are on the waitlist” modal. Antidote cards blurred SOON. |
-| `/task` | Hub: points HUD, Connect X, waitlist, referral link, leaderboard. |
-| `/profile` | Identity, optional wallet connect, waitlist copy. |
-| `/inventory` | Locked SOON. |
-| `/upgrade` | Locked SOON. |
+| `/` | Hero + outbreak protocol + strain preview. |
+| `/vault` | Strains briefing, compounding dose, sealed `$PLAGUES`. |
+| `/inventory` | Redirects to `/vault`. |
+| `/task` | Hub: points HUD, mint class, Connect X, waitlist, referral, leaderboard. |
+| `/profile` | Identity + mint class. |
+| `/upgrade` | Lab mutation locked (phase 3). |
 | `/leaderboard` | Redirects to `/task#board`. |
 | `/waitlist` | Legacy route; prefer `/task`. |
 
@@ -89,21 +108,25 @@ Task progress is stored in `localStorage` (`pfp-player`) and synced to Nhost whe
 
 ```
 app/
-  page.tsx                 Home + ENTER LAB
+  page.tsx                 Home + protocol + strains
+  vault/page.tsx           Vault tabs
+  inventory/page.tsx       Redirect → /vault
   task/page.tsx            Task hub
-  profile/page.tsx         Profile
-  inventory/page.tsx       SOON
-  upgrade/page.tsx         SOON
+  profile/page.tsx         Profile + mint class
+  upgrade/page.tsx         Lab sealed
   api/waitlist/route.ts    Allowlist + uniqueness + referral award
   api/rank/route.ts        Leaderboard + point sync
   api/x/start|callback     X OAuth
 components/
-  Navbar.tsx               HOME / INVENTORY / UPGRADE / TASK / PROFILE
+  Navbar.tsx               HOME / VAULT / LAB / TASK / PROFILE
+  ProtocolRoadmap.tsx      Phase cards
+  MintClassCard.tsx        Rank → class
   WaitlistForm.tsx         X → wallet → email → ref
   EnterLabButton.tsx       Modal trigger
   LabGateModal.tsx         Waitlist vs already-joined card
-  AntidoteCard.tsx         Blur + SOON
+  AntidoteCard.tsx         Strain briefing cards
 lib/
+  protocol.ts              Phases, rarities, mint class
   config.ts                Robinhood chain
   points.ts                Local tasks
   referral.ts              ref capture / lock
@@ -167,8 +190,8 @@ Robinhood Chain id `4663`, RPC `https://rpc.mainnet.chain.robinhood.com` (`lib/c
 ## What is intentionally unfinished
 
 - NFT contract, mint, allowlist-on-chain
-- `$PLAGUES` token and upgrade transactions
-- Inventory ownership from chain
+- `$PLAGUES` token and Lab upgrade transactions
+- Vault ownership from chain
 - Verified social tasks beyond Connect X (follow/tweet need write scopes + proof)
 
 ## Working agreement
