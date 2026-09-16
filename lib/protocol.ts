@@ -1,6 +1,7 @@
 import type { Rarity } from "./types";
 
 export const SUPPLY = 2000;
+export const OPENSEA_MINT = "https://opensea.io";
 
 export type PhaseStatus = "LIVE" | "NEXT" | "LOCKED";
 
@@ -18,42 +19,42 @@ export const PHASES: Phase[] = [
     code: "CONTAGION",
     status: "LIVE",
     title: "WAITLIST",
-    blurb: "Connect X. Join the list. Tasks and referrals compound your dose.",
+    blurb: "On this site. Connect X, join the list, climb rank for the OpenSea window.",
   },
   {
     id: 1,
     code: "ISOLATION",
     status: "NEXT",
     title: "SNAPSHOT",
-    blurb: "Rank freezes into a mint class. Patient Zero. Quarantine. Public.",
+    blurb: "Waitlist rank freezes. That list is for OpenSea mint access, not this dApp.",
   },
   {
     id: 2,
     code: "OUTBREAK",
     status: "LOCKED",
-    title: "MINT",
-    blurb: "2,000 Antidote vials open. Your class decides who extracts first.",
+    title: "MINT ON OPENSEA",
+    blurb: "2,000 vials mint on OpenSea. This dApp never mints.",
   },
   {
     id: 3,
     code: "MUTATION",
     status: "LOCKED",
     title: "LAB",
-    blurb: "Upgrade dose. Mutate rarity. Purity, stability, and potency move.",
+    blurb: "Hold a vial, then mutate it here. Purity, stability, potency.",
   },
   {
     id: 4,
     code: "CURE",
     status: "LOCKED",
     title: "$PLAGUES",
-    blurb: "Claim unlocks only after Outbreak. Living vials earn the token.",
+    blurb: "Extract $PLAGUES from a vial you own. Inventory only.",
   },
   {
     id: 5,
     code: "PANDEMIC",
     status: "LOCKED",
     title: "VAULT",
-    blurb: "Each vial carries its own vault. $PLAGUES, ETH, later stock tokens.",
+    blurb: "Each owned vial can hold $PLAGUES, ETH, later stock tokens.",
   },
 ];
 
@@ -71,14 +72,14 @@ export const RARITY_SPECS: RaritySpec[] = [
     supply: 1100,
     dose: "1–2",
     line: "Survives the first wave.",
-    perk: "Base $PLAGUES earn. Can mutate in the Lab.",
+    perk: "Base $PLAGUES extract. Can mutate in the Lab.",
   },
   {
     rarity: "RARE",
     supply: 500,
     dose: "2–3",
     line: "Holds under pressure.",
-    perk: "Higher earn multiplier. Wave-2 task access.",
+    perk: "Higher extract multiplier.",
   },
   {
     rarity: "EPIC",
@@ -92,64 +93,56 @@ export const RARITY_SPECS: RaritySpec[] = [
     supply: 120,
     dose: "4–5",
     line: "The cap does not leak.",
-    perk: "Vault boost. Heavier weight in token snapshot.",
+    perk: "Vault boost on the vial you hold.",
   },
   {
     rarity: "MYTHIC",
     supply: 30,
     dose: "5+",
     line: "The lab answers to you.",
-    perk: "Patient Zero rights. Highest multiplier. Corrupted aura.",
+    perk: "Highest extract multiplier. Corrupted aura.",
   },
 ];
 
-export type MintClassId = "PATIENT_ZERO" | "QUARANTINE" | "PUBLIC" | "UNLISTED";
+export type AllowlistClassId = "PATIENT_ZERO" | "QUARANTINE" | "PUBLIC" | "UNLISTED";
 
-export type MintClass = {
-  id: MintClassId;
+export type AllowlistClass = {
+  id: AllowlistClassId;
   label: string;
   window: string;
   hint: string;
 };
 
-export const MINT_CLASSES: Record<MintClassId, MintClass> = {
+export const ALLOWLIST_CLASSES: Record<AllowlistClassId, AllowlistClass> = {
   PATIENT_ZERO: {
     id: "PATIENT_ZERO",
     label: "PATIENT ZERO",
-    window: "FIRST EXTRACTION",
-    hint: "Top 50 rank. Earliest mint window. Heaviest dose weight.",
+    window: "OPENSEA — FIRST WINDOW",
+    hint: "Top 50 waitlist rank. First OpenSea mint window.",
   },
   QUARANTINE: {
     id: "QUARANTINE",
     label: "QUARANTINE",
-    window: "GTD MINT",
-    hint: "Rank 51–250. Guaranteed extraction before public.",
+    window: "OPENSEA — GTD",
+    hint: "Rank 51–250. Guaranteed OpenSea window before public.",
   },
   PUBLIC: {
     id: "PUBLIC",
     label: "PUBLIC",
-    window: "FCFS",
-    hint: "On the list. Points still compound dose after Isolation.",
+    window: "OPENSEA — FCFS",
+    hint: "On the list. Public OpenSea mint.",
   },
   UNLISTED: {
     id: "UNLISTED",
     label: "UNLISTED",
-    window: "NO SLOT",
-    hint: "Join the waitlist to start compounding a dose.",
+    window: "NO OPENSEA SLOT",
+    hint: "Join the waitlist on Task. Inventory stays separate.",
   },
 };
 
-export function mintClassFromRank(rank: number | null, joined: boolean): MintClass {
-  if (!joined || !rank) return MINT_CLASSES.UNLISTED;
-  if (rank <= 50) return MINT_CLASSES.PATIENT_ZERO;
-  if (rank <= 250) return MINT_CLASSES.QUARANTINE;
-  return MINT_CLASSES.PUBLIC;
-}
-
-export function purityFromPoints(points: number) {
-  return Math.min(99.9, Math.round((points / 12) * 10) / 10);
-}
-
-export function doseProgress(points: number) {
-  return Math.min(100, Math.floor(points / 8));
+export function allowlistClassFromRank(rank: number | null, joined: boolean): AllowlistClass {
+  if (!joined || !rank) return ALLOWLIST_CLASSES.UNLISTED;
+  if (rank <= 50) return ALLOWLIST_CLASSES.PATIENT_ZERO;
+  if (rank <= 250) return ALLOWLIST_CLASSES.QUARANTINE;
+  return ALLOWLIST_CLASSES.PUBLIC;
 }

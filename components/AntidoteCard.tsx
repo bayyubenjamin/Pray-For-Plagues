@@ -15,6 +15,7 @@ export default function AntidoteCard({
   compact = false,
   soon = false,
   briefing = false,
+  action = "USE",
 }: {
   nft: AntidoteNFT;
   onClick?: () => void;
@@ -22,6 +23,7 @@ export default function AntidoteCard({
   compact?: boolean;
   soon?: boolean;
   briefing?: boolean;
+  action?: string;
 }) {
   const spec = RARITY_SPECS.find((s) => s.rarity === nft.rarity);
   const dim = soon && !briefing;
@@ -36,7 +38,7 @@ export default function AntidoteCard({
         </div>
         {dim && (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/70">
-            <span className="font-bangers text-2xl sm:text-3xl text-green text-aura tracking-widest">SOON</span>
+            <span className="font-bangers text-2xl sm:text-3xl text-green text-aura tracking-widest">EMPTY</span>
           </div>
         )}
       </div>
@@ -52,11 +54,11 @@ export default function AntidoteCard({
       </div>
 
       {briefing && spec && (
-        <p className="font-tech text-[10px] leading-relaxed text-gray">{spec.line}</p>
+        <p className="font-tech text-[10px] leading-relaxed text-gray">{spec.perk}</p>
       )}
 
       <button type="button" disabled className="w-full py-2 border border-green/30 text-gray font-tech uppercase text-[10px] tracking-[0.2em] cursor-not-allowed opacity-50">
-        {briefing ? "OUTBREAK" : "SOON"}
+        {action}
       </button>
     </div>
   );
