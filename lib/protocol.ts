@@ -40,21 +40,21 @@ export const PHASES: Phase[] = [
     code: "MUTATION",
     status: "LOCKED",
     title: "LAB",
-    blurb: "Hold a vial, then mutate it here. Purity, stability, potency.",
+    blurb: "Hold a vial, then mutate it here. Contracts are not live.",
   },
   {
     id: 4,
     code: "CURE",
     status: "LOCKED",
     title: "$PLAGUES",
-    blurb: "Extract $PLAGUES from a vial you own. Inventory only.",
+    blurb: "Extract is planned from a vial you own. Token is not deployed.",
   },
   {
     id: 5,
     code: "PANDEMIC",
     status: "LOCKED",
     title: "VAULT",
-    blurb: "Each owned vial can hold $PLAGUES, ETH, later stock tokens.",
+    blurb: "A later wallet-per-vial layer. Not specified yet.",
   },
 ];
 
@@ -67,41 +67,11 @@ export type RaritySpec = {
 };
 
 export const RARITY_SPECS: RaritySpec[] = [
-  {
-    rarity: "COMMON",
-    supply: 1100,
-    dose: "1–2",
-    line: "Survives the first wave.",
-    perk: "Base $PLAGUES extract. Can mutate in the Lab.",
-  },
-  {
-    rarity: "RARE",
-    supply: 500,
-    dose: "2–3",
-    line: "Holds under pressure.",
-    perk: "Higher extract multiplier.",
-  },
-  {
-    rarity: "EPIC",
-    supply: 250,
-    dose: "3–4",
-    line: "The lab notices you.",
-    perk: "Priority Lab slot. Chance to mutate upward.",
-  },
-  {
-    rarity: "LEGENDARY",
-    supply: 120,
-    dose: "4–5",
-    line: "The cap does not leak.",
-    perk: "Vault boost on the vial you hold.",
-  },
-  {
-    rarity: "MYTHIC",
-    supply: 30,
-    dose: "5+",
-    line: "The lab answers to you.",
-    perk: "Highest extract multiplier. Corrupted aura.",
-  },
+  { rarity: "COMMON", supply: 1100, dose: "1–2", line: "Largest band.", perk: "" },
+  { rarity: "RARE", supply: 500, dose: "2–3", line: "Uncommon band.", perk: "" },
+  { rarity: "EPIC", supply: 250, dose: "3–4", line: "Low supply band.", perk: "" },
+  { rarity: "LEGENDARY", supply: 120, dose: "4–5", line: "Scarce band.", perk: "" },
+  { rarity: "MYTHIC", supply: 30, dose: "5+", line: "Lowest supply band.", perk: "" },
 ];
 
 export type AllowlistClassId = "PATIENT_ZERO" | "QUARANTINE" | "PUBLIC" | "UNLISTED";
