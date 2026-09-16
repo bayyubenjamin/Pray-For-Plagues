@@ -8,14 +8,14 @@ export default function Footer() {
           <p>THE PLAGUE IS REAL.</p>
           <p>THE CURE IS RARE.</p>
         </div>
-        <div className="flex gap-6 text-xs text-gray font-tech tracking-widest">
-          <a href="#" className="hover:text-green transition-colors">X</a>
-          <a href="#" className="hover:text-green transition-colors">OPENSEA</a>
-          <a href="#" className="hover:text-green transition-colors">ROBINHOOD CHAIN</a>
-         <Link href="/waitlist" className="hover:text-green transition-colors">WAITLIST</Link>
+        <div className="flex flex-wrap justify-center gap-6 text-xs text-gray font-tech tracking-widest">
+          <a href="https://x.com/pfphood" target="_blank" rel="noreferrer" className="hover:text-green transition-colors">X</a>
+          <Link href="/vault" className="hover:text-green transition-colors">VAULT</Link>
+          <Link href="/task" className="hover:text-green transition-colors">WAITLIST</Link>
+          <a href="https://docs.robinhood.com/chain" target="_blank" rel="noreferrer" className="hover:text-green transition-colors">ROBINHOOD CHAIN</a>
         </div>
         <div className="text-[10px] text-gray/50 uppercase">
-          ROBINHOOD CHAIN.
+          ROBINHOOD CHAIN · 2,000 VIALS
         </div>
       </div>
     </footer>

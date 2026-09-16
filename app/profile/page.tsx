@@ -5,6 +5,7 @@ import { useAccount } from "wagmi";
 import SectionTitle from "@/components/SectionTitle";
 import ConnectWallet from "@/components/ConnectWallet";
 import PanelCard from "@/components/PanelCard";
+import MintClassCard from "@/components/MintClassCard";
 import { formatAddress } from "@/lib/utils";
 import { completeTask, loadPlayer } from "@/lib/points";
 import { getXSession, setXSession } from "@/lib/x-session";
@@ -25,6 +26,7 @@ type Stats = {
   taskMax: number;
   refValid: number;
   refPending: number;
+  joined?: boolean;
 };
 
 export default function ProfilePage() {
@@ -39,6 +41,7 @@ export default function ProfilePage() {
     taskMax: 5,
     refValid: 0,
     refPending: 0,
+    joined: false,
   });
   const [mismatch, setMismatch] = useState("");
 
@@ -76,6 +79,7 @@ export default function ProfilePage() {
   const official = (profile?.wallet || waitlistWallet || "").toLowerCase();
   const connected = (profile?.connected_wallet || (isConnected ? address : "") || "").toLowerCase();
   const match = official && connected && official === connected;
+  const joined = Boolean(stats.joined || stats.rank || profile?.email || waitlistWallet);
 
   return (
     <div className="w-full max-w-3xl mx-auto px-4 py-12 flex flex-col gap-4">
@@ -94,6 +98,8 @@ export default function ProfilePage() {
           </p>
         </PanelCard>
       </div>
+
+      <MintClassCard rank={stats.rank} joined={joined} points={stats.points} />
 
       <PanelCard title="REFERRAL" compact>
         <div className="grid grid-cols-2 gap-2">

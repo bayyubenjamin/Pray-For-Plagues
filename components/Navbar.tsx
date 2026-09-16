@@ -7,7 +7,12 @@ import ConnectWallet from '@/components/ConnectWallet';
 
 export default function Navbar() {
   const pathname = usePathname();
-  const isActive = (path: string) => pathname === path || (path === '/task' && pathname === '/leaderboard');
+  const isActive = (path: string) => {
+    if (path === '/task') return pathname === '/task' || pathname === '/leaderboard' || pathname === '/waitlist';
+    if (path === '/vault') return pathname === '/vault' || pathname === '/inventory';
+    if (path === '/upgrade') return pathname === '/upgrade';
+    return pathname === path;
+  };
 
   return (
     <>
@@ -25,8 +30,8 @@ export default function Navbar() {
 
           <nav className="flex items-center gap-8 font-tech text-sm tracking-widest">
             <Link href="/" className={`transition-colors ${isActive('/') ? 'text-green font-bold drop-shadow-[0_0_8px_rgba(74,222,128,0.8)]' : 'text-white hover:text-green'}`}>HOME</Link>
-            <Link href="/inventory" className={`transition-colors ${isActive('/inventory') ? 'text-green font-bold drop-shadow-[0_0_8px_rgba(74,222,128,0.8)]' : 'text-white hover:text-green'}`}>INVENTORY</Link>
-            <Link href="/upgrade" className={`transition-colors ${isActive('/upgrade') ? 'text-green font-bold drop-shadow-[0_0_8px_rgba(74,222,128,0.8)]' : 'text-white hover:text-green'}`}>UPGRADE</Link>
+            <Link href="/vault" className={`transition-colors ${isActive('/vault') ? 'text-green font-bold drop-shadow-[0_0_8px_rgba(74,222,128,0.8)]' : 'text-white hover:text-green'}`}>VAULT</Link>
+            <Link href="/upgrade" className={`transition-colors ${isActive('/upgrade') ? 'text-green font-bold drop-shadow-[0_0_8px_rgba(74,222,128,0.8)]' : 'text-white hover:text-green'}`}>LAB</Link>
             <Link href="/task" className={`transition-colors ${isActive('/task') ? 'text-green font-bold drop-shadow-[0_0_8px_rgba(74,222,128,0.8)]' : 'text-white hover:text-green'}`}>TASK</Link>
             <Link href="/profile" className={`transition-colors ${isActive('/profile') ? 'text-green font-bold drop-shadow-[0_0_8px_rgba(74,222,128,0.8)]' : 'text-white hover:text-green'}`}>PROFILE</Link>
           </nav>
@@ -58,18 +63,18 @@ export default function Navbar() {
           <span className="mt-1">HOME</span>
         </Link>
 
-        <Link href="/inventory" className={`flex flex-col items-center transition group py-1 ${isActive('/inventory') ? 'text-green font-bold' : 'text-gray-400 hover:text-green'}`}>
-          <svg className={`w-5 h-5 transition ${isActive('/inventory') ? 'text-green drop-shadow-[0_0_8px_rgba(74,222,128,0.8)]' : 'group-hover:drop-shadow-[0_0_8px_rgba(74,222,128,0.8)]'}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <Link href="/vault" className={`flex flex-col items-center transition group py-1 ${isActive('/vault') ? 'text-green font-bold' : 'text-gray-400 hover:text-green'}`}>
+          <svg className={`w-5 h-5 transition ${isActive('/vault') ? 'text-green drop-shadow-[0_0_8px_rgba(74,222,128,0.8)]' : 'group-hover:drop-shadow-[0_0_8px_rgba(74,222,128,0.8)]'}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
           </svg>
-          <span className="mt-1">INVENTORY</span>
+          <span className="mt-1">VAULT</span>
         </Link>
 
         <Link href="/upgrade" className={`flex flex-col items-center transition group py-1 ${isActive('/upgrade') ? 'text-green font-bold' : 'text-gray-400 hover:text-green'}`}>
           <svg className={`w-5 h-5 transition ${isActive('/upgrade') ? 'text-green drop-shadow-[0_0_8px_rgba(74,222,128,0.8)]' : 'group-hover:drop-shadow-[0_0_8px_rgba(74,222,128,0.8)]'}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
           </svg>
-          <span className="mt-1">UPGRADE</span>
+          <span className="mt-1">LAB</span>
         </Link>
 
         <Link href="/task" className={`flex flex-col items-center transition group py-1 ${isActive('/task') ? 'text-green font-bold' : 'text-gray-400 hover:text-green'}`}>
