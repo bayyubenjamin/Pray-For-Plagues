@@ -31,7 +31,12 @@ export default function ProtocolRoadmap({
           )}
           {phase.status === "LIVE" && (
             <Link href="/task" className="mt-auto pt-1 font-tech text-[10px] tracking-widest text-green hover:text-green-bright">
-              ENTER CONTAGION →
+              OPEN WAITLIST →
+            </Link>
+          )}
+          {phase.code === "MUTATION" && (
+            <Link href="/inventory" className="mt-auto pt-1 font-tech text-[10px] tracking-widest text-green hover:text-green-bright">
+              INVENTORY →
             </Link>
           )}
         </article>

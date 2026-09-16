@@ -29,19 +29,27 @@ export default function LabGateModal({
           <div className="flex flex-col gap-5 pt-4">
             <p className="font-bangers text-3xl text-green text-aura tracking-widest">YOU ARE ON THE WAITLIST</p>
             <p className="font-tech text-xs text-gray tracking-widest leading-relaxed">
-              LAB ACCESS IS LOCKED FOR MINT. KEEP CLIMBING RANK — COMPLETE TASKS AND REFERRALS TO STACK POINTS ON THE LEADERBOARD.
+              WAITLIST IS FOR THE OPENSEA MINT WINDOW. INVENTORY AND LAB ONLY WORK AFTER YOU HOLD A VIAL.
             </p>
-            <Link
-              href="/task"
-              className="px-6 py-3 bg-green text-black font-tech font-bold text-sm tracking-[0.2em] text-center hover:bg-green-bright"
-            >
-              OPEN TASK
-            </Link>
+            <div className="flex flex-col gap-3">
+              <Link
+                href="/task"
+                className="px-6 py-3 bg-green text-black font-tech font-bold text-sm tracking-[0.2em] text-center hover:bg-green-bright"
+              >
+                OPEN TASK
+              </Link>
+              <Link
+                href="/inventory"
+                className="px-6 py-3 border border-green text-green font-tech font-bold text-sm tracking-[0.2em] text-center hover:bg-darkGreen"
+              >
+                INVENTORY
+              </Link>
+            </div>
           </div>
         ) : (
           <div className="flex flex-col gap-5 pt-4">
             <p className="font-bangers text-3xl text-green text-aura tracking-widest">ENTER LAB</p>
-            <p className="font-tech text-[10px] text-gray tracking-widest">JOIN WAITLIST FIRST.</p>
+            <p className="font-tech text-[10px] text-gray tracking-widest">JOIN WAITLIST FOR OPENSEA ACCESS.</p>
             <WaitlistForm xHandle={xHandle || loadPlayer().xHandle} />
           </div>
         )}

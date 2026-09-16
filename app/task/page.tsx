@@ -10,7 +10,7 @@ import { completeTask, loadPlayer, type PlayerState } from "@/lib/points";
 import { saveRef } from "@/lib/referral";
 import { syncWaitlistFromServer } from "@/lib/sync-waitlist";
 import { getXSession, setXSession } from "@/lib/x-session";
-import { mintClassFromRank } from "@/lib/protocol";
+import { allowlistClassFromRank } from "@/lib/protocol";
 
 type Row = { rank: number; xHandle: string; points: number; mine?: boolean };
 type Stats = {
@@ -92,11 +92,11 @@ export default function TaskPage() {
   const tweetText = `\u{1F9A0}\u{1F9EA} Antidote waitlist is live.\n${refLink}\n#prayforplagues #antidote #plagues`;
   const tweetHref = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
   const joined = Boolean(stats.joined || stats.rank);
-  const cls = mintClassFromRank(stats.rank, joined);
+  const cls = allowlistClassFromRank(stats.rank, joined);
 
   return (
     <div className="w-full max-w-4xl mx-auto px-4 py-12 pb-24 flex flex-col gap-4">
-      <SectionTitle title="TASK" subtitle="POINTS. CLASS. WAITLIST. REF. RANK." />
+      <SectionTitle title="TASK" subtitle="WAITLIST FOR OPENSEA. NOT INVENTORY." />
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         <PanelCard title="POINTS" compact>
@@ -110,7 +110,7 @@ export default function TaskPage() {
             {stats.taskDone}/{stats.taskMax}
           </p>
         </PanelCard>
-        <PanelCard title="CLASS" compact>
+        <PanelCard title="WINDOW" compact>
           <p className="font-bangers text-lg sm:text-xl text-green text-aura leading-none">{cls.label}</p>
         </PanelCard>
       </div>
@@ -164,7 +164,7 @@ export default function TaskPage() {
       </PanelCard>
 
       <PanelCard title="LEADERBOARD" id="board" className="overflow-hidden p-0 sm:p-0">
-        <p className="font-tech text-[10px] tracking-widest text-gray px-5 pt-5 mb-3">TOP 10 · RANK 1–50 PATIENT ZERO · 51–250 QUARANTINE</p>
+        <p className="font-tech text-[10px] tracking-widest text-gray px-5 pt-5 mb-3">TOP 10 · OPENSEA WINDOWS · 1–50 PATIENT ZERO · 51–250 QUARANTINE</p>
         <div className="overflow-x-auto">
           <table className="w-full text-left font-tech">
             <thead>

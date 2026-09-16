@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { OPENSEA_MINT } from "@/lib/protocol";
 
 export default function Footer() {
   return (
@@ -10,12 +11,12 @@ export default function Footer() {
         </div>
         <div className="flex flex-wrap justify-center gap-6 text-xs text-gray font-tech tracking-widest">
           <a href="https://x.com/pfphood" target="_blank" rel="noreferrer" className="hover:text-green transition-colors">X</a>
-          <Link href="/vault" className="hover:text-green transition-colors">VAULT</Link>
+          <a href={OPENSEA_MINT} target="_blank" rel="noreferrer" className="hover:text-green transition-colors">OPENSEA</a>
+          <Link href="/inventory" className="hover:text-green transition-colors">INVENTORY</Link>
           <Link href="/task" className="hover:text-green transition-colors">WAITLIST</Link>
-          <a href="https://docs.robinhood.com/chain" target="_blank" rel="noreferrer" className="hover:text-green transition-colors">ROBINHOOD CHAIN</a>
         </div>
         <div className="text-[10px] text-gray/50 uppercase">
-          ROBINHOOD CHAIN · 2,000 VIALS
+          MINT ON OPENSEA · UTILITY ON THIS LAB
         </div>
       </div>
     </footer>
