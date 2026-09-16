@@ -27,6 +27,7 @@ export default function AntidoteCard({
 }) {
   const spec = RARITY_SPECS.find((s) => s.rarity === nft.rarity);
   const dim = soon && !briefing;
+  const caption = spec?.line || spec?.perk || "";
 
   return (
     <div className="card-panel panel-border p-3 flex flex-col gap-3 relative">
@@ -53,8 +54,8 @@ export default function AntidoteCard({
         </span>
       </div>
 
-      {briefing && spec && (
-        <p className="font-tech text-[10px] leading-relaxed text-gray">{spec.perk}</p>
+      {briefing && caption && (
+        <p className="font-tech text-[10px] leading-relaxed text-gray">{caption}</p>
       )}
 
       <button type="button" disabled className="w-full py-2 border border-green/30 text-gray font-tech uppercase text-[10px] tracking-[0.2em] cursor-not-allowed opacity-50">
