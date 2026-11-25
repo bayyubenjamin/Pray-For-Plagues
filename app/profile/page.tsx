@@ -104,11 +104,11 @@ export default function ProfilePage() {
       <PanelCard title="REFERRAL" compact>
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <p className="font-tech text-[9px] text-gray tracking-widest">VALID</p>
+            <p className="font-tech text-[9px] text-zinc-400 tracking-widest">VALID</p>
             <p className="font-bangers text-2xl text-green text-aura leading-none">{stats.refValid}</p>
           </div>
           <div>
-            <p className="font-tech text-[9px] text-gray tracking-widest">PENDING</p>
+            <p className="font-tech text-[9px] text-zinc-400 tracking-widest">PENDING</p>
             <p className="font-bangers text-2xl text-green text-aura leading-none">{stats.refPending}</p>
           </div>
         </div>
@@ -130,7 +130,7 @@ export default function ProfilePage() {
       </PanelCard>
 
       <PanelCard title="EMAIL">
-        <p className="font-tech text-sm text-green tracking-widest break-all">{profile?.email || "\u2014"}</p>
+        <p className="font-tech text-sm text-green tracking-widest break-all">{profile?.email || "NOT JOINED YET — JOIN THE WAITLIST ON TASK"}</p>
       </PanelCard>
 
       <PanelCard title="PROFILE WALLET">

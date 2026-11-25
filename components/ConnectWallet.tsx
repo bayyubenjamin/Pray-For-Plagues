@@ -52,11 +52,12 @@ export default function ConnectWallet({ compact }: { compact?: boolean }) {
         fetch("/api/profile", {
           method: "POST",
           headers: { "content-type": "application/json" },
+          // No points here: the server owns points; this only links the
+          // connected wallet to the X identity.
           body: JSON.stringify({
             xHandle: x,
             wallet: locked,
             connectedWallet: address.toLowerCase(),
-            points: loadPlayer().points,
           }),
         }).catch(() => {});
       }
@@ -97,7 +98,7 @@ export default function ConnectWallet({ compact }: { compact?: boolean }) {
         </button>
         {showDropdown && (
           <div className="absolute right-0 mt-2 w-52 bg-deep border border-green/30 panel-border z-50">
-            <div className="p-2 border-b border-green/20 text-[10px] text-gray uppercase tracking-widest">
+            <div className="p-2 border-b border-green/20 text-[10px] text-zinc-400 uppercase tracking-widest">
               {onRh ? "ROBINHOOD CHAIN" : "WRONG NETWORK"}
             </div>
             {!onRh && (

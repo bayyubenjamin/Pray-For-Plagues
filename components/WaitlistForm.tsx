@@ -98,7 +98,7 @@ export default function WaitlistForm({
   };
 
   if (checking) {
-    return <p className="font-tech text-[10px] text-gray tracking-widest">CHECKING WAITLIST...</p>;
+    return <p className="font-tech text-[10px] text-zinc-400 tracking-widest">CHECKING WAITLIST...</p>;
   }
 
   if (joined) {
@@ -121,7 +121,7 @@ export default function WaitlistForm({
 
   return (
     <div className="w-full flex flex-col gap-4">
-      <ol className="font-tech text-[10px] text-gray tracking-widest leading-relaxed space-y-1">
+      <ol className="font-tech text-[10px] text-zinc-400 tracking-widest leading-relaxed space-y-1">
         <li>1. CONNECT X</li>
         <li>2. SOCIAL TASKS — 10S THEN CHECK</li>
         <li>3. PASTE WALLET + EMAIL</li>

@@ -1,5 +1,5 @@
 import { completeTask, uncompleteTask } from "./points";
-import { clearWaitlist, saveWaitlist, type LocalWaitlist } from "./waitlist-local";
+import { saveWaitlist, type LocalWaitlist } from "./waitlist-local";
 import { getXSession } from "./x-session";
 
 export async function syncWaitlistFromServer(xHandle?: string | null): Promise<LocalWaitlist> {

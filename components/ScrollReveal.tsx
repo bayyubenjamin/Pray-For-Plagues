@@ -5,22 +5,28 @@ import { cn } from "@/lib/utils";
 interface ScrollRevealProps {
   children: React.ReactNode;
   className?: string;
-  delay?: number; // Penundaan animasi dalam milidetik
+  delay?: number; // Delay in milliseconds
 }
 
 export default function ScrollReveal({ children, className, delay = 0 }: ScrollRevealProps) {
-  const [isVisible, setIsVisible] = useState(false);
+  // Respect reduced-motion: visible from the first render, no animation.
+  const [isVisible, setIsVisible] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  );
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (isVisible) return; // Reduced-motion (or already revealed): nothing to observe.
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           setIsVisible(true);
-          observer.disconnect(); // Animasi hanya berjalan sekali saat pertama kali terlihat
+          observer.disconnect(); // Animate once, the first time it appears
         }
       },
-      { threshold: 0.1 } // Elemen akan terdeteksi saat 10% bagian muncul di layar
+      { threshold: 0.1, rootMargin: "0px 0px -8% 0px" },
     );
 
     if (ref.current) {
@@ -28,18 +34,18 @@ export default function ScrollReveal({ children, className, delay = 0 }: ScrollR
     }
 
     return () => observer.disconnect();
-  }, []);
+  }, [isVisible]);
 
   return (
     <div
       ref={ref}
       style={{ transitionDelay: `${delay}ms` }}
       className={cn(
-        "transition-all duration-1000 ease-out transform",
-        isVisible 
-          ? "opacity-100 translate-y-0 scale-100" 
-          : "opacity-0 translate-y-12 scale-95",
-        className
+        "transition-all duration-700 ease-out will-change-transform",
+        isVisible
+          ? "opacity-100 translate-y-0"
+          : "opacity-0 translate-y-6",
+        className,
       )}
     >
       {children}

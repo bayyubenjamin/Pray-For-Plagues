@@ -1,6 +1,11 @@
 import { nhostAdminRequest } from "./nhost-server";
 
-const UPSERT_FULL = `
+// Points are only written when the caller passes a SERVER-computed value
+// (currently only the waitlist join, which awards WAITLIST_POINTS + social
+// points computed server-side). Client-supplied points must never reach this
+// function: /api/profile intentionally calls upsertProfile WITHOUT points,
+// so a profile upsert can never change the points column.
+const UPSERT_WITH_POINTS = `
   mutation UpsertProfile(
     $x_handle: String!,
     $wallet: String,
@@ -26,23 +31,23 @@ const UPSERT_FULL = `
   }
 `;
 
-const UPSERT_NO_EMAIL = `
-  mutation UpsertProfileNoEmail(
+const UPSERT_NO_POINTS = `
+  mutation UpsertProfileNoPoints(
     $x_handle: String!,
     $wallet: String,
-    $connected_wallet: String,
-    $points: Int!
+    $email: String,
+    $connected_wallet: String
   ) {
     insert_profiles_one(
       object: {
         x_handle: $x_handle,
         wallet: $wallet,
-        connected_wallet: $connected_wallet,
-        points: $points
+        email: $email,
+        connected_wallet: $connected_wallet
       }
       on_conflict: {
         constraint: profiles_x_handle_key
-        update_columns: [wallet, connected_wallet, points]
+        update_columns: [wallet, email, connected_wallet]
       }
     ) {
       id x_handle wallet email connected_wallet points
@@ -58,25 +63,29 @@ export async function upsertProfile(row: {
   points?: number;
 }) {
   const x_handle = row.xHandle.replace(/^@/, "").toLowerCase();
-  const points = row.points ?? 0;
   try {
-    if (row.email) {
-      await nhostAdminRequest(UPSERT_FULL, {
+    if (typeof row.points === "number") {
+      await nhostAdminRequest(UPSERT_WITH_POINTS, {
         x_handle,
         wallet: row.wallet || null,
-        email: row.email,
+        email: row.email || null,
         connected_wallet: row.connectedWallet || null,
-        points,
+        points: row.points,
       });
       return;
     }
-    await nhostAdminRequest(UPSERT_NO_EMAIL, {
+    await nhostAdminRequest(UPSERT_NO_POINTS, {
       x_handle,
       wallet: row.wallet || null,
+      email: row.email || null,
       connected_wallet: row.connectedWallet || null,
-      points,
     });
-  } catch {
-    /* profiles table / constraint may be missing */
+  } catch (err) {
+    // Profiles is a mirror table; a missing table/constraint must not fail
+    // the caller's request — but log it server-side so it is not invisible.
+    console.warn(
+      "[profile-upsert] profiles upsert skipped:",
+      err instanceof Error ? err.message : err,
+    );
   }
 }

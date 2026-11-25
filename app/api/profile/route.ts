@@ -76,16 +76,19 @@ export async function POST(req: Request) {
   if (!isNhostConfigured) {
     return NextResponse.json({ error: "Nhost not configured" }, { status: 503 });
   }
-  const body = await req.json();
-  const xHandle = String(body.xHandle ?? "").replace(/^@/, "").toLowerCase();
+  const body: unknown = await req.json().catch(() => ({}));
+  const obj = (body ?? {}) as Record<string, unknown>;
+  const xHandle = String(obj.xHandle ?? "").replace(/^@/, "").toLowerCase();
   if (!xHandle) return NextResponse.json({ error: "Missing X" }, { status: 400 });
 
+  // Deliberately NO points here: client-supplied points are never trusted.
+  // upsertProfile without `points` leaves the points column untouched.
   await upsertProfile({
     xHandle,
-    wallet: body.wallet,
-    email: body.email,
-    connectedWallet: body.connectedWallet,
-    points: Number(body.points ?? 0),
+    wallet: typeof obj.wallet === "string" ? obj.wallet : null,
+    email: typeof obj.email === "string" ? obj.email : null,
+    connectedWallet:
+      typeof obj.connectedWallet === "string" ? obj.connectedWallet : null,
   });
 
   return NextResponse.json({ ok: true });

@@ -53,13 +53,13 @@ Visual language (green glow, Bangers, lab chrome) must stay intact when editing 
 | Path | Role |
 | --- | --- |
 | `/` | Hero + outbreak protocol + strain preview. |
-| `/vault` | Strains briefing, compounding dose, sealed `$PLAGUES`. |
-| `/inventory` | Redirects to `/vault`. |
+| `/vault` | Redirects to `/inventory`. |
+| `/inventory` | Held vials (on-chain ownership check not live yet — count is 0 until mint + chain read). |
 | `/task` | Hub: points HUD, mint class, Connect X, waitlist, referral, leaderboard. |
 | `/profile` | Identity + mint class. |
 | `/upgrade` | Lab mutation locked (phase 3). |
 | `/leaderboard` | Redirects to `/task#board`. |
-| `/waitlist` | Legacy route; prefer `/task`. |
+| `/waitlist` | Legacy route; redirects to `/profile`. |
 
 ## API
 
@@ -70,7 +70,13 @@ Visual language (green glow, Bangers, lab chrome) must stay intact when editing 
 | `/api/waitlist` | POST | Validate + insert allowlist row. Award referral if valid. |
 | `/api/waitlist` | GET | `?x=&wallet=&email=` uniqueness + locked wallet. |
 | `/api/rank` | GET | Leaderboard by `waitlist.points`. |
-| `/api/rank` | POST | Sync local task points onto the waitlist row. |
+| `/api/rank` | POST | Read-only: returns the caller's current server points + rank. Never accepts points from the client. |
+| `/api/profile` | GET | Profile + waitlist row + wallet mismatch + referral stats. |
+| `/api/profile` | POST | Link connected wallet to an X identity. Never accepts points. |
+| `/api/social` | POST | Store claimed social task ids (self-reported, not X-verified). |
+| `/api/stats` | GET | `?x=` points, rank, task progress, referral counts. |
+| `/api/tasks` | GET | Active tasks (from Nhost `tasks`, fallback to built-in list). |
+| `/api/tasks` | POST | Referral validation, driven by stored `social_tasks` in the DB (≥ 4). |
 
 Waitlist POST rejects when Nhost is not configured (`503`). Duplicates return `409`.
 
@@ -102,20 +108,43 @@ On a valid first-time waitlist insert:
 | Visit lab (legacy) | 50 |
 | Valid referral (inviter) | 200 |
 
-Task progress is stored in `localStorage` (`pfp-player`) and synced to Nhost when a waitlist row exists. Rank is computed from `waitlist.points` descending.
+Task progress is stored in `localStorage` (`pfp-player`) for the local HUD.
+The server is the only authority for waitlist points: `POST /api/rank`
+returns the stored total and ignores any client-sent points, and
+`POST /api/profile` cannot change points. Rank is computed from
+`waitlist.points` descending.
+
+## Points security
+
+- Point values live in one place: `lib/points.ts` (`TASKS`). Server routes
+  import from there; no second copy of the numbers in any API route.
+- `POST /api/rank` is read-only (returns server points + rank). The old
+  client-controlled `_set: { points }` sync is removed.
+- `POST /api/tasks` validates referrals from stored `social_tasks` in the DB
+  (≥ 4), never from a client-sent `taskCount`. Referral bonus is 200 points
+  (`REFERRAL_POINTS`), the same value as the waitlist award.
+- Social tasks are **self-reported** (open link + 10 s timer) and are not
+  proof of a follow/like/repost — X verification is not implemented yet.
+  Points from them are participation points, not verified actions.
+- RLS on `waitlist` / `profiles` denies direct access (`using (false)`).
+  All access goes through the Next.js API routes with the admin secret.
 
 ## Repository map
 
 ```
 app/
-  page.tsx                 Home + protocol + strains
-  vault/page.tsx           Vault tabs
-  inventory/page.tsx       Redirect → /vault
+  page.tsx                 Home + protocol + strain preview
+  vault/page.tsx           Redirect → /inventory
+  inventory/page.tsx       Held vials (ownership check not live yet)
   task/page.tsx            Task hub
   profile/page.tsx         Profile + mint class
   upgrade/page.tsx         Lab sealed
   api/waitlist/route.ts    Allowlist + uniqueness + referral award
-  api/rank/route.ts        Leaderboard + point sync
+  api/rank/route.ts        Leaderboard + read-only points lookup
+  api/profile/route.ts     Profile read + wallet linking (no points)
+  api/social/route.ts      Store claimed social tasks (self-reported)
+  api/stats/route.ts       Points / rank / referral stats
+  api/tasks/route.ts       Task list + DB-driven referral validation
   api/x/start|callback     X OAuth
 components/
   Navbar.tsx               HOME / VAULT / LAB / TASK / PROFILE
@@ -128,11 +157,15 @@ components/
 lib/
   protocol.ts              Phases, rarities, mint class
   config.ts                Robinhood chain
-  points.ts                Local tasks
-  referral.ts              ref capture / lock
+  points.ts                Local tasks + single source of point values
+  social.ts                Social actions (points derived from points.ts)
+  referral.ts              ref capture / lock (+200)
   nhost.ts                 Public GraphQL URL
   nhost-server.ts          Admin-secret fetch
-nhost/schema.sql           Tables + unique constraints
+nhost/schema.sql           Tables + unique constraints + deny-direct RLS
+nhost/social_tasks.sql     social_tasks column
+nhost/tasks.sql            tasks table (social task catalog)
+nhost/profiles.sql         profiles mirror + deny-direct RLS
 ```
 
 ## Local setup
@@ -160,12 +193,14 @@ X_REDIRECT_URI=https://prayforplagues.xyz/api/x/callback
 ## Nhost
 
 1. Create a project at [app.nhost.io](https://app.nhost.io).
-2. Run `nhost/schema.sql` in Database → SQL.
+2. Run `nhost/schema.sql`, then `nhost/social_tasks.sql`, `nhost/tasks.sql`,
+   and `nhost/profiles.sql` in Database → SQL.
 3. If `waitlist` already existed, also run:
 
 ```sql
 alter table public.waitlist add column if not exists points integer not null default 0;
 alter table public.waitlist add column if not exists referred_by text;
+alter table public.waitlist add column if not exists social_tasks text[] not null default '{}';
 alter table public.waitlist add constraint waitlist_wallet_key unique (wallet);
 alter table public.waitlist add constraint waitlist_x_handle_key unique (x_handle);
 alter table public.waitlist add constraint waitlist_email_key unique (email);
