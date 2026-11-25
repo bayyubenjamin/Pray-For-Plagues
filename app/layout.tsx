@@ -3,6 +3,7 @@ import { Share_Tech_Mono } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 import BackgroundMusic from "@/components/BackgroundMusic";
+import ClickSound from "@/components/ClickSound";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackgroundEffects from "@/components/BackgroundEffects";
@@ -41,6 +42,7 @@ export default function RootLayout({
           <main className="flex-grow z-10 relative pt-24 pb-20">
             {children}
             <BackgroundMusic />
+            <ClickSound />
           </main>
           <Footer />
         </Providers>
