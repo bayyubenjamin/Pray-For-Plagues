@@ -4,13 +4,13 @@ Base images, one per rarity. Same vial, liquid colour = rarity.
 
 | Rarity | File | Supply | Vial | Liquid | Cap | Dose |
 | --- | --- | --- | --- | --- | --- | --- |
-| COMMON | `images/common.png` | 1.100 | Standard Vial | Green Fluid | Metal Cap | 1–2 |
-| RARE | `images/rare.png` | 500 | Reinforced Vial | Blue Fluid | Black Cap | 2–3 |
-| EPIC | `images/epic.png` | 250 | Dark Vial | Purple Fluid | Bone Cap | 3–4 |
-| LEGENDARY | `images/legendary.png` | 120 | Ancient Vial | Gold Fluid | Gold Cap | 4–5 |
-| MYTHIC | `images/mythic.png` | 30 | Cracked Vial | Red Fluid | Rusted Cap | 5+ |
+| COMMON | `images/common.jpg` | 1.100 | Standard Vial | Green Fluid | Metal Cap | 1–2 |
+| RARE | `images/rare.jpg` | 500 | Reinforced Vial | Blue Fluid | Black Cap | 2–3 |
+| EPIC | `images/epic.jpg` | 250 | Dark Vial | Purple Fluid | Bone Cap | 3–4 |
+| LEGENDARY | `images/legendary.jpg` | 120 | Ancient Vial | Gold Fluid | Gold Cap | 4–5 |
+| MYTHIC | `images/mythic.jpg` | 30 | Cracked Vial | Red Fluid | Rusted Cap | 5+ |
 
-Total: **2.000 vials**. All images 1280×1920 PNG. Label text on every
+Total: **2.000 vials**. All images 1280×1920 JPG (quality 90, 340-560 KB each). Label text on every
 image: `PLAGUES ANTIDOTE` + barcode + `THE PLAGUE HAS ARRIVED ON
 ROBINHOOD CHAIN`.
 
@@ -18,7 +18,7 @@ ROBINHOOD CHAIN`.
 
 - `metadata/<rarity>.json` — one OpenSea template per rarity (ERC-721
   metadata standard: `name`, `description`, `image`, `attributes`).
-  `image` uses `ipfs://REPLACE_WITH_CID/<rarity>.png` until the real CID
+  `image` uses `ipfs://REPLACE_WITH_CID/<rarity>.jpg` until the real CID
   is known.
 - `collection.json` — OpenSea collection metadata. Royalty is **0**
   and `fee_recipient` is a placeholder on purpose: decide the royalty %
@@ -31,7 +31,7 @@ ROBINHOOD CHAIN`.
 
 ## Deploy checklist (future)
 
-1. Upload `assets/nft/images/*.png` to IPFS, note the CID.
+1. Upload `assets/nft/images/*.jpg` to IPFS, note the CID.
 2. `node scripts/generate-nft-metadata.mjs --cid <CID>`
    (output: `assets/nft/generated/`, git-ignored — regenerate any time).
 3. Upload `assets/nft/generated/` to IPFS, note that CID.

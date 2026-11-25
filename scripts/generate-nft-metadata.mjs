@@ -1,7 +1,7 @@
 // Generate 2,000 per-token OpenSea metadata files from the 5 rarity templates.
 // No dependencies. Deterministic: same input always gives the same output.
 // Usage:
-//   1. Upload assets/nft/images/*.png to IPFS, note the CID.
+//   1. Upload assets/nft/images/*.jpg to IPFS, note the CID.
 //   2. node scripts/generate-nft-metadata.mjs --cid <CID> [--out assets/nft/generated]
 //   3. Upload the generated folder to IPFS and set it as the contract baseURI.
 // Token IDs 1-2000, in rarity order: Common 1-1100, Rare 1101-1600,
@@ -58,7 +58,7 @@ for (const r of RARITIES) {
       name: `Pray For Plagues #${id}`,
       description: template.description,
       external_url: "https://prayforplagues.xyz",
-      image: `ipfs://${cid}/${r.key}.png`,
+      image: `ipfs://${cid}/${r.key}.jpg`,
       attributes: [
         { trait_type: "Rarity", value: r.rarity },
         { trait_type: "Vial", value: r.vial },
