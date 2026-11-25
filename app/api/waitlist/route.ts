@@ -3,13 +3,7 @@ import { isNhostConfigured } from "@/lib/nhost";
 import { nhostAdminRequest } from "@/lib/nhost-server";
 import { REFERRAL_POINTS } from "@/lib/referral";
 import { upsertProfile } from "@/lib/profile-upsert";
-
-const POINTS: Record<string, number> = {
-  follow_x: 50,
-  like_post: 25,
-  repost_post: 25,
-  comment_post: 25,
-};
+import { WAITLIST_POINTS, socialPointsFor } from "@/lib/points";
 
 const INSERT = `
   mutation InsertWaitlist(
@@ -18,7 +12,8 @@ const INSERT = `
     $x_handle: String!,
     $referred_by: String,
     $source: String!,
-    $collection: String!
+    $collection: String!,
+    $points: Int!
   ) {
     insert_waitlist_one(
       object: {
@@ -26,7 +21,7 @@ const INSERT = `
         wallet: $wallet,
         x_handle: $x_handle,
         referred_by: $referred_by,
-        points: 150,
+        points: $points,
         source: $source,
         collection: $collection,
         status: "pending"
@@ -143,13 +138,17 @@ export async function POST(req: Request) {
       referred_by: validRef,
       source: "site",
       collection: "pray-for-plagues",
+      points: WAITLIST_POINTS,
     });
 
     if (validRef) {
       await nhostAdminRequest(AWARD, { x: validRef, pts: REFERRAL_POINTS });
     }
 
-    const socialPts = socialTasks.reduce((s: number, id: string) => s + (POINTS[id] || 0), 0);
+    // Social points are computed server-side from the single source of truth
+    // (lib/points.ts). Note: the underlying tasks are still self-reported
+    // (see /api/social) — this total is not proof of a follow/like/repost.
+    const socialPts = socialPointsFor(socialTasks);
     if (socialTasks.length) {
       try {
         await nhostAdminRequest(SET_SOCIAL, { x: xHandle, tasks: socialTasks, pts: socialPts });
@@ -158,7 +157,7 @@ export async function POST(req: Request) {
       }
     }
 
-    await upsertProfile({ xHandle, wallet, email, points: 150 + socialPts });
+    await upsertProfile({ xHandle, wallet, email, points: WAITLIST_POINTS + socialPts });
 
     return NextResponse.json({
       ok: true,

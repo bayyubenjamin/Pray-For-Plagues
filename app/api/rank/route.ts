@@ -13,21 +13,12 @@ const LIST = `
   }
 `;
 
-const SYNC = `
-  mutation SyncPoints($x: String!, $wallet: String, $points: Int!) {
-    update_waitlist(
-      where: {
-        _or: [
-          { x_handle: { _ilike: $x } },
-          { wallet: { _ilike: $wallet } }
-        ]
-      },
-      _set: { points: $points }
-    ) {
-      affected_rows
-    }
-  }
-`;
+type RankRow = { x_handle: string; wallet: string; points: number };
+
+async function loadBoard(): Promise<RankRow[]> {
+  const data = await nhostAdminRequest<{ waitlist: RankRow[] }>(LIST, {});
+  return data.waitlist || [];
+}
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -37,8 +28,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ rows: [], rank: null });
   }
 
-  const data = await nhostAdminRequest<{ waitlist: { x_handle: string; wallet: string; points: number }[] }>(LIST, {});
-  const all = data.waitlist || [];
+  const all = await loadBoard();
   const mineIndex = x ? all.findIndex((r) => r.x_handle.toLowerCase() === x) : -1;
 
   const rows = all.slice(0, 10).map((row, i) => ({
@@ -55,17 +45,33 @@ export async function GET(req: Request) {
   });
 }
 
+// POST is READ-ONLY: it returns the caller's current server-side points and
+// rank. It NEVER accepts points from the client — any body.points is ignored.
+// Points change only through server-side events (waitlist join, referral
+// award). The old client-controlled `_set: { points }` sync is removed.
 export async function POST(req: Request) {
   if (!isNhostConfigured) {
     return NextResponse.json({ ok: false }, { status: 503 });
   }
-  const body = await req.json();
-  const x = String(body.xHandle ?? "").replace(/^@/, "").trim().toLowerCase();
-  const wallet = String(body.wallet ?? "").trim().toLowerCase();
-  const points = Number(body.points ?? 0);
+  const body: unknown = await req.json().catch(() => ({}));
+  const obj = (body ?? {}) as Record<string, unknown>;
+  const x = String(obj.xHandle ?? "").replace(/^@/, "").trim().toLowerCase();
+  const wallet = String(obj.wallet ?? "").trim().toLowerCase();
   if (!x && !wallet) {
     return NextResponse.json({ error: "Missing identity" }, { status: 400 });
   }
-  await nhostAdminRequest(SYNC, { x: x || "__none__", wallet: wallet || "__none__", points });
-  return NextResponse.json({ ok: true });
+  const all = await loadBoard();
+  const mineIndex = all.findIndex(
+    (r) =>
+      (x && r.x_handle.toLowerCase() === x) ||
+      (wallet && r.wallet.toLowerCase() === wallet),
+  );
+  if (mineIndex < 0) {
+    return NextResponse.json({ ok: false, points: 0, rank: null }, { status: 404 });
+  }
+  return NextResponse.json({
+    ok: true,
+    points: all[mineIndex].points ?? 0,
+    rank: mineIndex + 1,
+  });
 }

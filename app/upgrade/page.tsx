@@ -15,12 +15,12 @@ export default function UpgradePage() {
         </div>
         <div className="relative z-10 text-center px-4">
           <p className="font-bangers text-5xl text-green text-aura tracking-widest">NO VIAL</p>
-          <p className="mt-4 font-tech text-[11px] leading-relaxed text-gray">
+          <p className="mt-4 font-tech text-[11px] leading-relaxed text-zinc-400">
             Lab reads Inventory. Connect a wallet that holds a vial, pick it, then mutate dose and rarity. Mint stays on OpenSea.
           </p>
         </div>
-        <button type="button" disabled className="w-full py-4 font-tech tracking-[0.2em] uppercase bg-green/30 text-black cursor-not-allowed opacity-50">
-          MUTATE
+        <button type="button" disabled aria-disabled="true" className="w-full py-4 font-tech tracking-[0.2em] uppercase bg-green/30 text-black cursor-not-allowed opacity-50">
+          MUTATE — LOCKED UNTIL MINT
         </button>
         <Link href="/inventory" className="font-tech text-[10px] tracking-widest text-green hover:text-green-bright">
           OPEN INVENTORY →

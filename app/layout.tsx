@@ -22,9 +22,8 @@ const shareTechMono = Share_Tech_Mono({
 export const metadata: Metadata = {
   title: "PRAY FOR PLAGUES",
   description: "THE PLAGUE HAS ARRIVED ON ROBINHOOD CHAIN.",
-  // Tambahkan baris ini, pastikan path-nya sesuai dengan nama file di folder public/
   icons: {
-    icon: "/icon.png", 
+    icon: "/favicon.ico",
   },
 };
 

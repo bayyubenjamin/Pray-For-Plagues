@@ -45,7 +45,7 @@ export default function InventoryPage() {
             type="button"
             onClick={() => setTab(item)}
             className={`px-4 py-2 font-tech text-[10px] tracking-widest uppercase border ${
-              tab === item ? "bg-green text-black border-green" : "border-green/30 text-gray hover:text-green"
+              tab === item ? "bg-green text-black border-green" : "border-green/30 text-zinc-400 hover:text-green"
             }`}
           >
             {item}
@@ -64,22 +64,22 @@ export default function InventoryPage() {
                 </div>
               </div>
               <div className="p-6 sm:p-8">
-                <p className="font-tech text-[10px] tracking-[0.25em] text-gray">COLLECTION</p>
+                <p className="font-tech text-[10px] tracking-[0.25em] text-zinc-400">COLLECTION</p>
                 <h3 className="mt-2 font-bangers text-3xl sm:text-4xl text-green tracking-wide">ANTIDOTE VIALS</h3>
-                <p className="mt-4 max-w-xl font-tech text-[12px] leading-relaxed text-gray">
+                <p className="mt-4 max-w-xl font-tech text-[12px] leading-relaxed text-zinc-400">
                   A vial is an NFT on Robinhood Chain. Inventory lists only tokens in the connected wallet. Mint and secondary sales stay on OpenSea. This page does not mint.
                 </p>
                 <div className="mt-6 flex flex-wrap gap-6">
                   <div>
-                    <p className="font-tech text-[9px] tracking-widest text-gray">SUPPLY</p>
+                    <p className="font-tech text-[9px] tracking-widest text-zinc-400">SUPPLY</p>
                     <p className="font-bangers text-2xl text-green leading-none mt-1">{SUPPLY.toLocaleString()}</p>
                   </div>
                   <div>
-                    <p className="font-tech text-[9px] tracking-widest text-gray">IN THIS WALLET</p>
+                    <p className="font-tech text-[9px] tracking-widest text-zinc-400">IN THIS WALLET</p>
                     <p className="font-bangers text-2xl text-green leading-none mt-1">{ownedCount}</p>
                   </div>
                   <div>
-                    <p className="font-tech text-[9px] tracking-widest text-gray">STATUS</p>
+                    <p className="font-tech text-[9px] tracking-widest text-zinc-400">STATUS</p>
                     <p className="font-tech text-sm text-green tracking-widest mt-2">NOT MINTED</p>
                   </div>
                 </div>
@@ -111,19 +111,19 @@ export default function InventoryPage() {
               },
             ].map((item) => (
               <PanelCard key={item.title} title={item.title}>
-                <p className="font-tech text-[12px] leading-relaxed text-gray">{item.body}</p>
+                <p className="font-tech text-[12px] leading-relaxed text-zinc-400">{item.body}</p>
               </PanelCard>
             ))}
           </div>
 
           <PanelCard title="RARITY BANDS">
-            <p className="mb-4 font-tech text-[11px] leading-relaxed text-gray">
+            <p className="mb-4 font-tech text-[11px] leading-relaxed text-zinc-400">
               Planned distribution for {SUPPLY.toLocaleString()} vials. Multipliers and Lab rules will be published with the contracts — not before.
             </p>
             <div className="overflow-x-auto">
               <table className="w-full text-left font-tech">
                 <thead>
-                  <tr className="border-y border-green/20 text-gray text-[10px] tracking-widest">
+                  <tr className="border-y border-green/20 text-zinc-400 text-[10px] tracking-widest">
                     <th className="py-3 pr-4">TIER</th>
                     <th className="py-3 pr-4">COUNT</th>
                     <th className="py-3">NOTE</th>
@@ -134,7 +134,7 @@ export default function InventoryPage() {
                     <tr key={spec.rarity} className="border-b border-green/10">
                       <td className="py-3 pr-4 text-green tracking-widest">{spec.rarity}</td>
                       <td className="py-3 pr-4 text-white">{spec.supply.toLocaleString()}</td>
-                      <td className="py-3 text-gray">{spec.line}</td>
+                      <td className="py-3 text-zinc-400">{spec.line}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -143,9 +143,10 @@ export default function InventoryPage() {
           </PanelCard>
 
           <div className="border border-dashed border-green/20 px-6 py-14 text-center">
-            <p className="font-tech text-[10px] tracking-[0.3em] text-gray">OWNED</p>
+            <p className="font-tech text-[10px] tracking-[0.3em] text-zinc-400">OWNED</p>
             <p className="mt-3 font-bangers text-3xl text-green tracking-wide">NO VIALS IN WALLET</p>
-            <p className="mt-3 font-tech text-[11px] text-gray tracking-widest">CONNECT A WALLET THAT HOLDS ONE AFTER MINT</p>
+            <p className="mt-3 font-tech text-[11px] text-zinc-400 tracking-widest">CONNECT A WALLET THAT HOLDS ONE AFTER MINT</p>
+            <p className="mt-2 font-tech text-[10px] text-zinc-400/70 tracking-widest">ON-CHAIN OWNERSHIP CHECK NOT LIVE YET — COUNT STAYS 0 UNTIL MINT</p>
           </div>
         </div>
       )}
@@ -153,12 +154,12 @@ export default function InventoryPage() {
       {tab === "EXTRACT" && (
         <div className="max-w-xl mx-auto">
           <PanelCard>
-            <p className="font-tech text-[10px] tracking-widest text-gray">$PLAGUES</p>
+            <p className="font-tech text-[10px] tracking-widest text-zinc-400">$PLAGUES</p>
             <h3 className="mt-3 font-bangers text-4xl text-green tracking-wide">EXTRACT</h3>
-            <p className="mt-4 font-tech text-[12px] leading-relaxed text-gray">
+            <p className="mt-4 font-tech text-[12px] leading-relaxed text-zinc-400">
               Extract will send $PLAGUES from a vial in this wallet. The token contract is not deployed. Waitlist points cannot extract.
             </p>
-            <button type="button" disabled className="mt-6 w-full py-4 font-tech tracking-[0.2em] uppercase border border-green/20 text-gray cursor-not-allowed">
+            <button type="button" disabled className="mt-6 w-full py-4 font-tech tracking-[0.2em] uppercase border border-green/20 text-zinc-400 cursor-not-allowed">
               NOT AVAILABLE
             </button>
           </PanelCard>
@@ -168,9 +169,9 @@ export default function InventoryPage() {
       {tab === "LAB" && (
         <div className="max-w-xl mx-auto">
           <PanelCard>
-            <p className="font-tech text-[10px] tracking-widest text-gray">MUTATION</p>
+            <p className="font-tech text-[10px] tracking-widest text-zinc-400">MUTATION</p>
             <h3 className="mt-3 font-bangers text-4xl text-green tracking-wide">LAB</h3>
-            <p className="mt-4 font-tech text-[12px] leading-relaxed text-gray">
+            <p className="mt-4 font-tech text-[12px] leading-relaxed text-zinc-400">
               Lab will operate on a selected vial from Inventory. Stats (purity, stability, potency) are designed into the metadata. The upgrade contract is not live.
             </p>
             <Link href="/upgrade" className="inline-block mt-6 px-6 py-3 border border-green text-green font-tech text-[10px] tracking-widest hover:bg-darkGreen">

@@ -35,6 +35,10 @@ const Q_BASIC = `
   }
 `;
 
+type MeRow = { points?: number; social_tasks?: string[] | null; x_handle: string };
+type BoardRow = { x_handle: string; points: number };
+type RefRow = { social_tasks?: string[] | null; x_handle?: string };
+
 export async function GET(req: Request) {
   const x = new URL(req.url).searchParams.get("x")?.replace(/^@/, "").toLowerCase() || "";
   const empty = {
@@ -49,9 +53,9 @@ export async function GET(req: Request) {
   if (!isNhostConfigured || !x) return NextResponse.json(empty);
 
   const pack = (
-    me: { points?: number; social_tasks?: string[] | null; x_handle: string } | undefined,
-    board: { x_handle: string; points: number }[],
-    refs: { social_tasks?: string[] | null }[]
+    me: MeRow | undefined,
+    board: BoardRow[],
+    refs: RefRow[],
   ) => {
     const social = me?.social_tasks || [];
     const rankIndex = board.findIndex((r) => r.x_handle.toLowerCase() === x);
@@ -79,12 +83,11 @@ export async function GET(req: Request) {
   } catch {
     try {
       const data = await nhostAdminRequest<{
-        me: { points: number; x_handle: string }[];
-        board: { x_handle: string; points: number }[];
-        refs: { x_handle: string }[];
+        me: MeRow[];
+        board: BoardRow[];
+        refs: RefRow[];
       }>(Q_BASIC, { x });
-      // Error TS2345 diselesaikan dengan as any pada pemanggilan pack block fallback ini
-      return NextResponse.json(pack(data.me[0] as any, data.board || [], data.refs as any));
+      return NextResponse.json(pack(data.me[0], data.board || [], data.refs || []));
     } catch {
       return NextResponse.json(empty);
     }

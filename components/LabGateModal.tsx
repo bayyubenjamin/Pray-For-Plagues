@@ -21,14 +21,14 @@ export default function LabGateModal({
     <div className="fixed inset-0 z-[80] flex items-center justify-center px-4">
       <button type="button" className="absolute inset-0 bg-black/80" onClick={onClose} aria-label="Close" />
       <div className="relative w-full max-w-lg border border-green/40 bg-black panel-border p-6 sm:p-8 box-aura max-h-[85vh] overflow-y-auto">
-        <button type="button" onClick={onClose} className="absolute top-3 right-4 text-gray font-tech text-xs tracking-widest hover:text-green">
+        <button type="button" onClick={onClose} className="absolute top-3 right-4 text-zinc-400 font-tech text-xs tracking-widest hover:text-green">
           CLOSE
         </button>
 
         {joined ? (
           <div className="flex flex-col gap-5 pt-4">
             <p className="font-bangers text-3xl text-green text-aura tracking-widest">YOU ARE ON THE WAITLIST</p>
-            <p className="font-tech text-xs text-gray tracking-widest leading-relaxed">
+            <p className="font-tech text-xs text-zinc-400 tracking-widest leading-relaxed">
               WAITLIST IS FOR THE OPENSEA MINT WINDOW. INVENTORY AND LAB ONLY WORK AFTER YOU HOLD A VIAL.
             </p>
             <div className="flex flex-col gap-3">
@@ -49,7 +49,7 @@ export default function LabGateModal({
         ) : (
           <div className="flex flex-col gap-5 pt-4">
             <p className="font-bangers text-3xl text-green text-aura tracking-widest">ENTER LAB</p>
-            <p className="font-tech text-[10px] text-gray tracking-widest">JOIN WAITLIST FOR OPENSEA ACCESS.</p>
+            <p className="font-tech text-[10px] text-zinc-400 tracking-widest">JOIN WAITLIST FOR OPENSEA ACCESS.</p>
             <WaitlistForm xHandle={xHandle || loadPlayer().xHandle} />
           </div>
         )}

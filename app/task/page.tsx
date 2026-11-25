@@ -136,11 +136,11 @@ export default function TaskPage() {
       <PanelCard title="REFERRAL">
         <div className="grid grid-cols-2 gap-2 mb-4">
           <div className="border border-green/20 p-3">
-            <p className="font-tech text-[9px] text-gray tracking-widest">VALID</p>
+            <p className="font-tech text-[9px] text-zinc-400 tracking-widest">VALID</p>
             <p className="font-bangers text-2xl text-green text-aura leading-none mt-1">{stats.refValid}</p>
           </div>
           <div className="border border-green/20 p-3">
-            <p className="font-tech text-[9px] text-gray tracking-widest">PENDING</p>
+            <p className="font-tech text-[9px] text-zinc-400 tracking-widest">PENDING</p>
             <p className="font-bangers text-2xl text-green text-aura leading-none mt-1">{stats.refPending}</p>
           </div>
         </div>
@@ -164,11 +164,11 @@ export default function TaskPage() {
       </PanelCard>
 
       <PanelCard title="LEADERBOARD" id="board" className="overflow-hidden p-0 sm:p-0">
-        <p className="font-tech text-[10px] tracking-widest text-gray px-5 pt-5 mb-3">TOP 10 · OPENSEA WINDOWS · 1–50 PATIENT ZERO · 51–250 QUARANTINE</p>
+        <p className="font-tech text-[10px] tracking-widest text-zinc-400 px-5 pt-5 mb-3">TOP 10 · OPENSEA WINDOWS · 1–50 PATIENT ZERO · 51–250 QUARANTINE</p>
         <div className="overflow-x-auto">
           <table className="w-full text-left font-tech">
             <thead>
-              <tr className="border-y border-green/20 text-gray text-[10px] tracking-widest">
+              <tr className="border-y border-green/20 text-zinc-400 text-[10px] tracking-widest">
                 <th className="px-5 py-3">RANK</th>
                 <th className="px-5 py-3">X</th>
                 <th className="px-5 py-3">POINTS</th>
@@ -176,10 +176,10 @@ export default function TaskPage() {
             </thead>
             <tbody>
               {rows.length === 0 && (
-                <tr><td colSpan={3} className="px-5 py-6 text-gray text-[10px] tracking-widest">NO RANKS YET</td></tr>
+                <tr><td colSpan={3} className="px-5 py-6 text-zinc-400 text-[10px] tracking-widest">NO RANKS YET — BE THE FIRST TO JOIN THE WAITLIST</td></tr>
               )}
               {rows.map((row) => (
-                <tr key={`${row.rank}-${row.xHandle}`} className="border-b border-green/10">
+                <tr key={`${row.rank}-${row.xHandle}`} className="border-b border-green/10 hover:bg-green/5 transition-colors">
                   <td className={`px-5 py-3 ${row.rank <= 3 ? "text-green" : "text-white"}`}>{row.rank}</td>
                   <td className={`px-5 py-3 ${row.mine ? "text-green" : "text-white"}`}>{row.xHandle}</td>
                   <td className="px-5 py-3 text-green">{row.points}</td>

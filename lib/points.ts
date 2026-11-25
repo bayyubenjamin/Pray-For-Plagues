@@ -12,6 +12,20 @@ export const TASKS = [
 
 export type TaskId = (typeof TASKS)[number]["id"] | string;
 
+// Single source of truth for point values. Server routes must import from
+// here (or from lib/social.ts, which derives from here) — never hardcode a
+// second copy of these numbers in an API route.
+export const WAITLIST_POINTS = 150;
+
+export function pointsForTask(id: string): number {
+  return TASKS.find((t) => t.id === id)?.points ?? 0;
+}
+
+/** Server-side total for a set of social task ids (deduped, unknown ids = 0). */
+export function socialPointsFor(ids: string[]): number {
+  return [...new Set(ids)].reduce((sum, id) => sum + pointsForTask(id), 0);
+}
+
 export type PlayerState = {
   wallet?: string;
   xHandle?: string;
@@ -82,16 +96,26 @@ export function uncompleteTask(id: TaskId): PlayerState {
   return next;
 }
 
+/**
+ * Refresh local points from the server. READ-ONLY: this never sends points
+ * to the server — the server is the only authority for waitlist points
+ * (see POST /api/rank). Local task progress stays in localStorage; if the
+ * server reports a higher total (e.g. a referral award), adopt it.
+ */
 function syncRank(state: PlayerState) {
   if (typeof window === "undefined") return;
-  if (!state.xHandle && !state.wallet) return;
-  fetch("/api/rank", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      xHandle: state.xHandle,
-      wallet: state.wallet,
-      points: state.points,
-    }),
-  }).catch(() => {});
+  const x = (state.xHandle || "").replace(/^@/, "").trim().toLowerCase();
+  if (!x) return;
+  fetch(`/api/rank?x=${encodeURIComponent(x)}`)
+    .then((r) => r.json())
+    .then((json: { points?: unknown; rank?: unknown }) => {
+      const serverPoints = typeof json?.points === "number" ? json.points : 0;
+      if (json?.rank != null && serverPoints > 0) {
+        const current = loadPlayer();
+        if (serverPoints > current.points) {
+          savePlayer({ ...current, points: serverPoints });
+        }
+      }
+    })
+    .catch(() => {});
 }

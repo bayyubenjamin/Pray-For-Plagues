@@ -17,7 +17,10 @@ alter table public.profiles add column if not exists points integer not null def
 
 alter table public.profiles enable row level security;
 drop policy if exists "profiles_all" on public.profiles;
-create policy "profiles_all" on public.profiles for all using (true) with check (true);
+drop policy if exists "profiles_no_direct_access" on public.profiles;
+-- Deny direct access: all reads/writes go through the Next.js API routes
+-- with the Hasura admin secret (see nhost/schema.sql). Never using (true).
+create policy "profiles_no_direct_access" on public.profiles for all using (false) with check (false);
 
 -- copy current waitlist rows into profiles
 insert into public.profiles (x_handle, email, wallet, points)

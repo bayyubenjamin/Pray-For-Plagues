@@ -22,6 +22,7 @@ create table if not exists public.waitlist (
 
 alter table public.waitlist add column if not exists points integer not null default 0;
 alter table public.waitlist add column if not exists referred_by text;
+alter table public.waitlist add column if not exists social_tasks text[] not null default '{}';
 
 create table if not exists public.profiles (
   id uuid primary key default gen_random_uuid(),
@@ -35,16 +36,21 @@ create table if not exists public.profiles (
 );
 
 alter table public.profiles add column if not exists points integer not null default 0;
+alter table public.profiles add column if not exists connected_wallet text;
 
 alter table public.waitlist enable row level security;
 alter table public.profiles enable row level security;
 
+-- RLS: deny DIRECT access. The public must never read/write these tables
+-- straight from Hasura/Postgres. All access goes through the Next.js API
+-- routes, which authenticate with the Hasura admin secret (the admin secret
+-- bypasses RLS). Do not relax these policies back to using (true).
 drop policy if exists "waitlist_insert" on public.waitlist;
 drop policy if exists "waitlist_select" on public.waitlist;
 drop policy if exists "waitlist_update" on public.waitlist;
-create policy "waitlist_insert" on public.waitlist for insert with check (true);
-create policy "waitlist_select" on public.waitlist for select using (true);
-create policy "waitlist_update" on public.waitlist for update using (true);
+drop policy if exists "waitlist_no_direct_access" on public.waitlist;
+create policy "waitlist_no_direct_access" on public.waitlist for all using (false) with check (false);
 
 drop policy if exists "profiles_all" on public.profiles;
-create policy "profiles_all" on public.profiles for all using (true) with check (true);
+drop policy if exists "profiles_no_direct_access" on public.profiles;
+create policy "profiles_no_direct_access" on public.profiles for all using (false) with check (false);
