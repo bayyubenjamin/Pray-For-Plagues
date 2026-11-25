@@ -14,6 +14,11 @@ Total: **2.000 vials**. All images 1280×1920 JPG (quality 90, 340-560 KB each).
 image: `PLAGUES ANTIDOTE` + barcode + `THE PLAGUE HAS ARRIVED ON
 ROBINHOOD CHAIN`.
 
+> Website copies: `public/images/vials/*.jpg` are web-optimized versions
+> of these masters (640×960, quality 82, 74–142 KB each), shown on the
+> home page and Inventory. If a master changes, re-export the matching
+> web copy from it — never edit the web copy as the source of truth.
+
 ## Metadata
 
 - `metadata/<rarity>.json` — one OpenSea template per rarity (ERC-721

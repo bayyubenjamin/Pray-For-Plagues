@@ -8,11 +8,10 @@ import { OPENSEA_MINT } from "@/lib/protocol";
 import Link from "next/link";
 
 export default function Home() {
-  const previewNFTs = STRAIN_PREVIEW.filter((n) =>
-    (["MYTHIC", "LEGENDARY", "EPIC", "RARE"] as const).includes(
-      n.rarity as "MYTHIC" | "LEGENDARY" | "EPIC" | "RARE"
-    )
-  ).slice(0, 4);
+  // One preview card per rarity, Common first — every vial art is shown.
+  const previewNFTs = (["COMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC"] as const).map(
+    (rarity) => STRAIN_PREVIEW.find((n) => n.rarity === rarity)!
+  );
 
   return (
     <div className="flex flex-col items-center w-full">
@@ -21,10 +20,10 @@ export default function Home() {
           <h1 className="animate-hero-rise font-bangers text-5xl sm:text-7xl md:text-[5.5rem] text-green tracking-wider text-aura leading-none drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)]">
             PRAY FOR PLAGUES
           </h1>
-          <p className="font-tech text-[8px] sm:text-xs md:text-sm tracking-[0.2em] sm:tracking-[0.3em] uppercase max-w-2xl px-4 sm:px-6 py-2 card-panel border border-green/30 box-aura">
+          <p className="font-tech text-xs sm:text-sm md:text-base tracking-[0.2em] sm:tracking-[0.3em] uppercase max-w-2xl px-4 sm:px-6 py-2 card-panel border border-green/30 box-aura">
             THE PLAGUE HAS ARRIVED ON <span className="text-green font-bold">ROBINHOOD</span> CHAIN.
           </p>
-          <p className="font-tech text-[10px] sm:text-xs tracking-[0.2em] text-zinc-400 uppercase">
+          <p className="font-tech text-xs sm:text-sm tracking-[0.2em] text-zinc-300 uppercase">
             Mint on OpenSea. Use the vial here.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mt-4 w-full sm:w-auto px-6 sm:px-0">
@@ -57,13 +56,13 @@ export default function Home() {
         <ScrollReveal>
           <SectionTitle title="ANTIDOTE UTILITY" subtitle="WHAT A HELD VIAL DOES" />
         </ScrollReveal>
-        <p className="text-center font-tech text-[10px] tracking-[0.25em] text-zinc-400 uppercase">
+        <p className="text-center font-tech text-xs tracking-[0.25em] text-zinc-300 uppercase">
           Strain preview — illustrative stats only · Real stats come after mint
         </p>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mt-8">
           {previewNFTs.map((nft, index) => (
             <ScrollReveal key={nft.id} delay={index * 100}>
-              <AntidoteCard nft={nft} compact briefing action="LOCKED" />
+              <AntidoteCard nft={nft} briefing action="LOCKED" />
             </ScrollReveal>
           ))}
         </div>
