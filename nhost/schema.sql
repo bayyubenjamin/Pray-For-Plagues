@@ -22,6 +22,7 @@ create table if not exists public.waitlist (
 
 alter table public.waitlist add column if not exists points integer not null default 0;
 alter table public.waitlist add column if not exists referred_by text;
+alter table public.waitlist add column if not exists x_user_id text;
 alter table public.waitlist add column if not exists social_tasks text[] not null default '{}';
 
 create table if not exists public.profiles (
@@ -52,5 +53,8 @@ drop policy if exists "waitlist_no_direct_access" on public.waitlist;
 create policy "waitlist_no_direct_access" on public.waitlist for all using (false) with check (false);
 
 drop policy if exists "profiles_all" on public.profiles;
+drop policy if exists "profiles_select" on public.profiles;
+drop policy if exists "profiles_update" on public.profiles;
+drop policy if exists "profiles_insert" on public.profiles;
 drop policy if exists "profiles_no_direct_access" on public.profiles;
 create policy "profiles_no_direct_access" on public.profiles for all using (false) with check (false);
