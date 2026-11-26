@@ -1,13 +1,19 @@
+"use client";
+
+import { useState } from "react";
 import SectionTitle from "@/components/SectionTitle";
 import AntidoteCard from "@/components/AntidoteCard";
+import NftDetailModal from "@/components/NftDetailModal";
 import ScrollReveal from "@/components/ScrollReveal";
 import EnterLabButton from "@/components/EnterLabButton";
 import ProtocolRoadmap from "@/components/ProtocolRoadmap";
 import { STRAIN_PREVIEW } from "@/lib/mockData";
 import { OPENSEA_MINT } from "@/lib/protocol";
+import { AntidoteNFT } from "@/lib/types";
 import Link from "next/link";
 
 export default function Home() {
+  const [selected, setSelected] = useState<AntidoteNFT | null>(null);
   // One preview card per rarity, Common first — every vial art is shown.
   const previewNFTs = (["COMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC"] as const).map(
     (rarity) => STRAIN_PREVIEW.find((n) => n.rarity === rarity)!
@@ -38,7 +44,7 @@ export default function Home() {
         </ScrollReveal>
       </section>
 
-      <section className="w-full max-w-6xl mx-auto px-4 py-16 sm:py-20">
+      <section className="cv-auto w-full max-w-6xl mx-auto px-4 py-16 sm:py-20">
         <ScrollReveal>
           <SectionTitle title="OUTBREAK PROTOCOL" subtitle="MINT ON OPENSEA · UTILITY ON THIS LAB" />
         </ScrollReveal>
@@ -46,13 +52,13 @@ export default function Home() {
           <ProtocolRoadmap />
         </ScrollReveal>
         <div className="text-center mt-8">
-          <a href={OPENSEA_MINT} target="_blank" rel="noreferrer" className="font-tech text-xs tracking-widest text-green hover:text-green-bright">
-            OPENSEA MINT →
+          <a href={OPENSEA_MINT} target="_blank" rel="noreferrer" className="font-tech text-xs tracking-widest text-green hover:text-green-bright underline underline-offset-4 decoration-green/40">
+            OPENSEA MINT
           </a>
         </div>
       </section>
 
-      <section className="w-full max-w-6xl mx-auto px-4 py-16 sm:py-20">
+      <section className="cv-auto w-full max-w-6xl mx-auto px-4 py-16 sm:py-20">
         <ScrollReveal>
           <SectionTitle title="ANTIDOTE UTILITY" subtitle="WHAT A HELD VIAL DOES" />
         </ScrollReveal>
@@ -62,15 +68,16 @@ export default function Home() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mt-8">
           {previewNFTs.map((nft, index) => (
             <ScrollReveal key={nft.id} delay={index * 100}>
-              <AntidoteCard nft={nft} briefing action="LOCKED" />
+              <AntidoteCard nft={nft} briefing onSelect={setSelected} />
             </ScrollReveal>
           ))}
         </div>
         <div className="text-center mt-8">
-          <Link href="/inventory" className="font-tech text-xs tracking-widest text-green hover:text-green-bright">
-            OPEN INVENTORY →
+          <Link href="/inventory" className="font-tech text-xs tracking-widest text-green hover:text-green-bright underline underline-offset-4 decoration-green/40">
+            OPEN INVENTORY
           </Link>
         </div>
+        <NftDetailModal nft={selected} onClose={() => setSelected(null)} />
       </section>
     </div>
   );

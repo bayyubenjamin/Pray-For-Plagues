@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useAccount, useConnect, useDisconnect, useChainId, useSwitchChain } from "wagmi";
-import { LogOut, Copy, Check, User } from "lucide-react";
 import { formatAddress } from "@/lib/utils";
 import { robinhoodChain } from "@/lib/config";
 import { completeTask, loadPlayer } from "@/lib/points";
@@ -106,20 +105,20 @@ export default function ConnectWallet({ compact }: { compact?: boolean }) {
                 {isSwitching ? "SWITCHING..." : "SWITCH TO ROBINHOOD"}
               </button>
             )}
-            <Link href="/profile" onClick={() => setShowDropdown(false)} className="w-full text-left px-4 py-3 text-xs text-white hover:bg-darkGreen flex items-center justify-between">
-              PROFILE <User size={14} />
+            <Link href="/profile" onClick={() => setShowDropdown(false)} className="w-full text-left px-4 py-3 text-xs text-white hover:bg-darkGreen">
+              PROFILE
             </Link>
-            <button onClick={handleCopy} className="w-full text-left px-4 py-3 text-xs text-white hover:bg-darkGreen flex items-center justify-between">
-              COPY ADDRESS {copied ? <Check size={14} className="text-green" /> : <Copy size={14} />}
+            <button onClick={handleCopy} className="w-full text-left px-4 py-3 text-xs text-white hover:bg-darkGreen">
+              {copied ? "COPIED" : "COPY ADDRESS"}
             </button>
             <button
               onClick={() => {
                 disconnect();
                 setShowDropdown(false);
               }}
-              className="w-full text-left px-4 py-3 text-xs text-red-500 hover:bg-red-500/10 flex items-center justify-between"
+              className="w-full text-left px-4 py-3 text-xs text-red-500 hover:bg-red-500/10"
             >
-              DISCONNECT <LogOut size={14} />
+              DISCONNECT
             </button>
           </div>
         )}
@@ -132,7 +131,7 @@ export default function ConnectWallet({ compact }: { compact?: boolean }) {
       <button onClick={handleConnect} disabled={isPending} className="px-4 py-2 border border-green text-green bg-black hover:bg-darkGreen font-tech uppercase text-xs sm:text-sm tracking-wider box-aura">
         {isPending ? "CONNECTING..." : "CONNECT WALLET"}
       </button>
-      {mismatch && <p className="font-tech text-[9px] text-red-500 tracking-widest text-right">{mismatch}</p>}
+      {mismatch && <p className="font-tech text-[10px] text-red-500 tracking-widest text-right">{mismatch}</p>}
     </div>
   );
 }

@@ -116,6 +116,13 @@ body {
     inset 0 1px 0 rgba(0, 200, 5, 0.1);
 }
 
+/* Below-fold sections skip rendering until near the viewport,
+   so first paint stays light on phones. */
+.cv-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: 700px;
+}
+
 /* Soft pulsing dot for the LIVE phase badge. */
 @keyframes pulse-dot {
   0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(57, 255, 20, 0.55); }
@@ -132,6 +139,15 @@ body {
 }
 .animate-hero-rise {
   animation: hero-rise 0.8s ease-out both;
+}
+
+/* NFT detail modal entrance. */
+@keyframes modal-rise {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-modal {
+  animation: modal-rise 0.25s ease-out both;
 }
 
 @media (prefers-reduced-motion: reduce) {

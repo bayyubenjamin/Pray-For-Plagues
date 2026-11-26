@@ -22,8 +22,8 @@ export default function UpgradePage() {
         <button type="button" disabled aria-disabled="true" className="w-full py-4 font-tech tracking-[0.2em] uppercase bg-green/30 text-black cursor-not-allowed opacity-50">
           MUTATE — LOCKED UNTIL MINT
         </button>
-        <Link href="/inventory" className="font-tech text-[10px] tracking-widest text-green hover:text-green-bright">
-          OPEN INVENTORY →
+        <Link href="/inventory" className="font-tech text-[10px] tracking-widest text-green hover:text-green-bright underline underline-offset-4 decoration-green/40">
+          OPEN INVENTORY
         </Link>
       </PanelCard>
     </div>

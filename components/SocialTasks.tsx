@@ -2,11 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import { SOCIAL_ACTIONS } from "@/lib/social";
+import { TASKS } from "@/lib/points";
 import { loadSocialDone, markSocialDone } from "@/lib/social-progress";
 import { loadWaitlist } from "@/lib/waitlist-local";
 import { loadPlayer } from "@/lib/points";
 
 type Task = { id: string; label: string; href: string; points: number };
+
+const HINTS: Record<string, string> = Object.fromEntries(TASKS.map((t) => [t.id, t.hint]));
 
 export default function SocialTasks({ enabled = false }: { enabled?: boolean }) {
   const [tasks, setTasks] = useState<Task[]>(SOCIAL_ACTIONS);
@@ -63,23 +66,44 @@ export default function SocialTasks({ enabled = false }: { enabled?: boolean }) 
     }, 1000);
   };
 
+  const doneCount = tasks.filter((t) => done.includes(t.id)).length;
+
   return (
-    <div className="grid grid-cols-2 gap-2">
-      {tasks.map((action) => {
+    <div className="flex flex-col gap-2">
+      <p className="font-tech text-[10px] tracking-[0.2em] text-zinc-400 mb-1">
+        {doneCount}/{tasks.length} DONE — EACH TASK OPENS X, THEN CHECKS AFTER 10S
+      </p>
+      {tasks.map((action, i) => {
         const cooling = left[action.id];
         const isDone = done.includes(action.id);
+        const status = !enabled ? "CONNECT X" : cooling ? `WAIT ${cooling}S` : isDone ? "DONE" : "OPEN";
         return (
           <button
             key={action.id}
             type="button"
             disabled={!enabled || isDone || Boolean(cooling)}
             onClick={() => start(action)}
-            className="px-3 py-3 border border-green/40 font-tech text-[10px] tracking-widest text-green text-center hover:bg-darkGreen disabled:opacity-35 disabled:cursor-not-allowed"
+            className={`w-full flex items-center gap-3 px-4 py-3 border text-left transition-colors disabled:cursor-not-allowed ${
+              isDone
+                ? "border-green/50 bg-green/5"
+                : "border-green/25 hover:border-green/60 hover:bg-darkGreen disabled:opacity-45"
+            }`}
           >
-            {!enabled && `${action.label} +${action.points}`}
-            {enabled && cooling ? `${action.label} ${cooling}s` : null}
-            {enabled && !cooling && isDone ? `\u2713 ${action.label}` : null}
-            {enabled && !cooling && !isDone ? `${action.label} +${action.points}` : null}
+            <span className="font-tech text-xs text-zinc-500 shrink-0">{String(i + 1).padStart(2, "0")}</span>
+            <span className="flex-1 min-w-0">
+              <span className="block font-tech text-sm tracking-widest text-white">{action.label}</span>
+              <span className="block font-tech text-[10px] tracking-widest text-zinc-400 mt-0.5">
+                {HINTS[action.id] || ""}
+              </span>
+            </span>
+            <span className="font-tech text-xs tracking-widest text-green shrink-0">+{action.points} PTS</span>
+            <span
+              className={`font-tech text-[10px] tracking-widest shrink-0 w-[74px] text-right ${
+                isDone ? "text-green" : "text-zinc-400"
+              }`}
+            >
+              {status}
+            </span>
           </button>
         );
       })}

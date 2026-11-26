@@ -7,7 +7,10 @@ import { useAccount } from "wagmi";
 import SectionTitle from "@/components/SectionTitle";
 import PanelCard from "@/components/PanelCard";
 import ConnectWallet from "@/components/ConnectWallet";
+import NftDetailModal from "@/components/NftDetailModal";
 import { OPENSEA_MINT, RARITY_SPECS, SUPPLY } from "@/lib/protocol";
+import { STRAIN_PREVIEW } from "@/lib/mockData";
+import { AntidoteNFT } from "@/lib/types";
 import { formatAddress } from "@/lib/utils";
 
 type Tab = "VIALS" | "EXTRACT" | "LAB";
@@ -15,6 +18,7 @@ type Tab = "VIALS" | "EXTRACT" | "LAB";
 export default function InventoryPage() {
   const { address, isConnected } = useAccount();
   const [tab, setTab] = useState<Tab>("VIALS");
+  const [selected, setSelected] = useState<AntidoteNFT | null>(null);
   const ownedCount = 0;
 
   return (
@@ -99,12 +103,18 @@ export default function InventoryPage() {
             </div>
           </div>
 
-          <div className="card-panel p-4 sm:p-6">
+          <div className="card-panel cv-auto p-4 sm:p-6">
             <p className="font-tech text-xs tracking-[0.25em] text-zinc-300">THE FIVE STRAINS</p>
             <h3 className="mt-2 font-bangers text-2xl sm:text-3xl text-green tracking-wide">VIAL ART BY RARITY</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mt-5">
               {RARITY_SPECS.map((spec) => (
-                <div key={spec.rarity} className="border border-green/20 bg-black overflow-hidden">
+                <button
+                  key={spec.rarity}
+                  type="button"
+                  onClick={() => setSelected(STRAIN_PREVIEW.find((n) => n.rarity === spec.rarity) || null)}
+                  className="card-lift border border-green/20 bg-black overflow-hidden text-left cursor-pointer"
+                  aria-label={`${spec.rarity} vial, view details`}
+                >
                   <div className="relative aspect-[2/3]">
                     <Image
                       src={spec.image}
@@ -118,9 +128,10 @@ export default function InventoryPage() {
                     <span className="font-tech text-[10px] tracking-widest text-green">{spec.rarity}</span>
                     <span className="font-tech text-[10px] tracking-widest text-zinc-300">{spec.supply.toLocaleString()}</span>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
+            <p className="mt-3 font-tech text-[10px] tracking-widest text-zinc-400">TAP A VIAL FOR FULL DETAILS</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-3">
@@ -208,6 +219,8 @@ export default function InventoryPage() {
           </PanelCard>
         </div>
       )}
+
+      <NftDetailModal nft={selected} onClose={() => setSelected(null)} />
     </div>
   );
 }
