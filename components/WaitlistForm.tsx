@@ -91,7 +91,9 @@ export default function WaitlistForm({
       setLockedWallet(confirmed.wallet || w);
       setStatus("ok");
       setMessage(
-        json.referralAwarded ? "JOINED. REFERRAL COUNTED +200 TO INVITER." : "YOU ARE ON THE WAITLIST."
+        json.referralPending
+          ? "JOINED. REFERRAL RECORDED — +200 TO YOUR INVITER WHEN YOU FINISH 4 SOCIAL TASKS."
+          : "YOU ARE ON THE WAITLIST."
       );
     } catch (err) {
       setStatus("error");
