@@ -7,11 +7,14 @@ import { useAccount } from "wagmi";
 import SectionTitle from "@/components/SectionTitle";
 import PanelCard from "@/components/PanelCard";
 import ConnectWallet from "@/components/ConnectWallet";
-import NftDetailModal from "@/components/NftDetailModal";
+import dynamic from "next/dynamic";
 import { OPENSEA_MINT, RARITY_SPECS, SUPPLY } from "@/lib/protocol";
 import { STRAIN_PREVIEW } from "@/lib/mockData";
 import { AntidoteNFT } from "@/lib/types";
 import { formatAddress } from "@/lib/utils";
+
+// Loaded on demand only — the modal chunk stays out of the first load.
+const NftDetailModal = dynamic(() => import("@/components/NftDetailModal"), { ssr: false });
 
 type Tab = "VIALS" | "EXTRACT" | "LAB";
 

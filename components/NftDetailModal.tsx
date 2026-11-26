@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { AntidoteNFT } from "@/lib/types";
 import { OPENSEA_MINT, RARITY_SPECS } from "@/lib/protocol";
@@ -35,6 +36,9 @@ export default function NftDetailModal({
   nft: AntidoteNFT | null;
   onClose: () => void;
 }) {
+  // Rendered into document.body on purpose: a `position: fixed` modal must
+  // never live inside a `content-visibility: auto` ancestor — that ancestor
+  // becomes its containing block and the panel lands below the viewport.
   useEffect(() => {
     if (!nft) return;
     const onKey = (e: KeyboardEvent) => {
@@ -44,7 +48,9 @@ export default function NftDetailModal({
     return () => window.removeEventListener("keydown", onKey);
   }, [nft, onClose]);
 
-  if (!nft) return null;
+  // `nft` is only ever set from a click (client-only), so `document` exists
+  // whenever this renders; the guard keeps the server render safe.
+  if (!nft || typeof document === "undefined") return null;
 
   const spec = RARITY_SPECS.find((s) => s.rarity === nft.rarity);
   const traits: Array<[string, string]> = [
@@ -56,7 +62,7 @@ export default function NftDetailModal({
     ["AURA", nft.aura],
   ];
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center sm:px-4">
       <button type="button" className="absolute inset-0 bg-black/85" onClick={onClose} aria-label="Close" />
       <div className="animate-modal relative w-full max-w-2xl border border-green/40 bg-black panel-border max-h-[90vh] overflow-y-auto">
@@ -125,6 +131,36 @@ export default function NftDetailModal({
               </dl>
             </div>
 
+            <div>
+              <p className="font-tech text-[10px] tracking-[0.25em] text-zinc-400">PLANNED DISTRIBUTION — 2,000 VIALS</p>
+              <p className="mt-1 font-tech text-[10px] leading-relaxed tracking-widest text-zinc-400">
+                MULTIPLIERS AND LAB RULES WILL BE PUBLISHED WITH THE CONTRACTS — NOT BEFORE.
+              </p>
+              <table className="mt-3 w-full text-left font-tech">
+                <thead>
+                  <tr className="border-y border-green/20 text-zinc-400 text-[10px] tracking-widest">
+                    <th className="py-2 pr-2">TIER</th>
+                    <th className="py-2 pr-2">COUNT</th>
+                    <th className="py-2">NOTE</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {RARITY_SPECS.map((s) => (
+                    <tr
+                      key={s.rarity}
+                      className={`border-b border-green/10 ${s.rarity === nft.rarity ? "bg-green/5" : ""}`}
+                    >
+                      <td className={`py-2 pr-2 text-xs tracking-widest ${s.rarity === nft.rarity ? "text-green" : "text-white"}`}>
+                        {s.rarity}
+                      </td>
+                      <td className="py-2 pr-2 text-xs text-white">{s.supply.toLocaleString()}</td>
+                      <td className="py-2 text-[11px] leading-relaxed text-zinc-400">{s.line}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
             <p className="font-tech text-[10px] leading-relaxed tracking-widest text-zinc-400">
               STRAIN PREVIEW — ILLUSTRATIVE STATS ONLY. REAL STATS COME AFTER MINT.
             </p>
@@ -139,6 +175,7 @@ export default function NftDetailModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -1,24 +1,12 @@
-"use client";
-
-import { useState } from "react";
 import SectionTitle from "@/components/SectionTitle";
-import AntidoteCard from "@/components/AntidoteCard";
-import NftDetailModal from "@/components/NftDetailModal";
+import NftPreviewGrid from "@/components/NftPreviewGrid";
 import ScrollReveal from "@/components/ScrollReveal";
 import EnterLabButton from "@/components/EnterLabButton";
 import ProtocolRoadmap from "@/components/ProtocolRoadmap";
-import { STRAIN_PREVIEW } from "@/lib/mockData";
 import { OPENSEA_MINT } from "@/lib/protocol";
-import { AntidoteNFT } from "@/lib/types";
 import Link from "next/link";
 
 export default function Home() {
-  const [selected, setSelected] = useState<AntidoteNFT | null>(null);
-  // One preview card per rarity, Common first — every vial art is shown.
-  const previewNFTs = (["COMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC"] as const).map(
-    (rarity) => STRAIN_PREVIEW.find((n) => n.rarity === rarity)!
-  );
-
   return (
     <div className="flex flex-col items-center w-full">
       <section className="w-full min-h-screen flex flex-col items-center justify-center px-4 relative overflow-hidden">
@@ -65,19 +53,12 @@ export default function Home() {
         <p className="text-center font-tech text-xs tracking-[0.25em] text-zinc-300 uppercase">
           Strain preview — illustrative stats only · Real stats come after mint
         </p>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mt-8">
-          {previewNFTs.map((nft, index) => (
-            <ScrollReveal key={nft.id} delay={index * 100}>
-              <AntidoteCard nft={nft} briefing onSelect={setSelected} />
-            </ScrollReveal>
-          ))}
-        </div>
+        <NftPreviewGrid />
         <div className="text-center mt-8">
           <Link href="/inventory" className="font-tech text-xs tracking-widest text-green hover:text-green-bright underline underline-offset-4 decoration-green/40">
             OPEN INVENTORY
           </Link>
         </div>
-        <NftDetailModal nft={selected} onClose={() => setSelected(null)} />
       </section>
     </div>
   );
