@@ -141,6 +141,26 @@ returns the stored total and ignores any client-sent points, and
 - RLS on `waitlist` / `profiles` denies direct access (`using (false)`).
   All access goes through the Next.js API routes with the admin secret.
 
+## Lab (on-chain upgrade, prepared)
+
+The Lab is the on-chain upgrade terminal: select a vial you hold, then
+MUTATE one stat (purity / stability / potency) or EXTRACT $PLAGUES from it.
+Both actions are real wagmi writes (`useWriteContract` +
+`useWaitForTransactionReceipt`, hash linked to Blockscout) — but they are
+gated on the contracts existing:
+
+- `NEXT_PUBLIC_LAB_CONTRACT` — the Lab operator (`mutate(uint256, uint8)`,
+  `extract(uint256)`). While unset, both buttons are sealed.
+- `NEXT_PUBLIC_PLAGUES_TOKEN` — the $PLAGUES ERC-20, balance read only.
+- `NEXT_PUBLIC_VIAL_CONTRACT` — the vial ERC-721; the selector reads owned
+  token ids via `tokenOfOwnerByIndex` (falls back to manual token-id entry
+  if the collection is not enumerable).
+
+The ABI in `lib/lab-contracts.ts` is a prepared draft: function names and
+argument order MUST match the deployed Lab contract, or the calls revert.
+Effect amounts and costs are set by the contract, not by the UI — the page
+never invents them.
+
 ## Repository map
 
 ```
@@ -176,7 +196,8 @@ lib/
   session.ts               Signed X session cookie (HMAC)
   board.ts                 Shared leaderboard load + totals
   point-events.ts          Point ledger (record / list)
-  vial-contract.ts         Vial contract + on-chain balanceOf
+  vial-contract.ts         Vial contract + on-chain balanceOf + token ids
+  lab-contracts.ts         Lab + $PLAGUES contracts, draft ABI, guards
   useOwnedVials.ts         Owned-vial hook for Inventory / Lab
   nhost.ts                 Public GraphQL URL
   nhost-server.ts          Admin-secret fetch
