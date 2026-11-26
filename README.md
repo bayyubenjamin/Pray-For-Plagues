@@ -66,17 +66,17 @@ Visual language (green glow, Bangers, lab chrome) must stay intact when editing 
 | Endpoint | Method | Purpose |
 | --- | --- | --- |
 | `/api/x/start` | GET | Begin X OAuth. |
-| `/api/x/callback` | GET | Exchange code, read `/2/users/me`, return to `/task?x=connected&handle=`. |
-| `/api/waitlist` | POST | Validate + insert allowlist row. Award referral if valid. |
-| `/api/waitlist` | GET | `?x=&wallet=&email=` uniqueness + locked wallet. |
-| `/api/rank` | GET | Leaderboard by `waitlist.points`. |
+| `/api/x/callback` | GET | Exchange code, read `/2/users/me`, store `x_user_id`, issue the signed session cookie, return to `/task?x=connected&handle=`. |
+| `/api/waitlist` | POST | Validate + insert allowlist row. Records `referred_by`; the referral award is NOT paid here (see Referral). |
+| `/api/waitlist` | GET | `?x=&wallet=&email=` — returns the matching row only (no taken/oracle flags). |
+| `/api/rank` | GET | Leaderboard by `waitlist.points` + totals (`totalMembers`, `totalPoints`). |
 | `/api/rank` | POST | Read-only: returns the caller's current server points + rank. Never accepts points from the client. |
-| `/api/profile` | GET | Profile + waitlist row + wallet mismatch + referral stats. |
-| `/api/profile` | POST | Link connected wallet to an X identity. Never accepts points. |
-| `/api/social` | POST | Store claimed social task ids (self-reported, not X-verified). |
-| `/api/stats` | GET | `?x=` points, rank, task progress, referral counts. |
+| `/api/profile` | GET | Profile + waitlist row + wallet mismatch + join date. Email/wallet require the signed X session. |
+| `/api/profile` | POST | Link connected wallet to an X identity. Never accepts points. Requires the signed X session. |
+| `/api/social` | POST | Store claimed social task ids (self-reported, not X-verified). Credits only NEW ids and pays the referral award when the invitee reaches 4 tasks. Requires the signed X session. |
+| `/api/history` | GET | `?x=` point ledger events (JOIN / SOCIAL / REFERRAL) + unitemized earlier points. Requires the signed X session. |
+| `/api/stats` | GET | `?x=` points, rank, task progress, referral counts, join date, waitlist totals. |
 | `/api/tasks` | GET | Active tasks (from Nhost `tasks`, fallback to built-in list). |
-| `/api/tasks` | POST | Referral validation, driven by stored `social_tasks` in the DB (≥ 4). |
 
 Waitlist POST rejects when Nhost is not configured (`503`). Duplicates return `409`.
 
@@ -95,20 +95,24 @@ On a valid first-time waitlist insert:
 - Invitee must be a new X + wallet + email.
 - Referrer handle must already exist on `waitlist`.
 - Self-referral is rejected.
-- Referrer receives **+200** points (`_inc` on `waitlist.points`).
+- The referral is recorded (`referred_by`) but NOT paid yet. The referrer
+  receives **+200** points exactly once, when the invitee finishes 4 social
+  tasks (validated server-side in `POST /api/social`, guarded by
+  `waitlist.referral_awarded`).
 
 ## Points (current)
 
 | Task | Points |
 | --- | --- |
-| Connect wallet | 100 |
-| Switch Robinhood | 150 |
-| Connect X | 200 |
 | Join waitlist | 150 |
-| Visit lab (legacy) | 50 |
-| Valid referral (inviter) | 200 |
+| Social tasks (follow 50, like 25, repost 25, comment 25) | 125 max |
+| Valid referral (inviter, when invitee finishes 4 social tasks) | 200 |
 
-Task progress is stored in `localStorage` (`pfp-player`) for the local HUD.
+Connect wallet / switch Robinhood / connect X are progress steps, not point
+awards (they used to carry points locally while the server never credited
+them — local and server points never agreed). Task progress is stored in
+`localStorage` (`pfp-player`) for the local HUD. Every server point change
+is written to the `point_events` ledger and shown on Task as POINTS HISTORY.
 The server is the only authority for waitlist points: `POST /api/rank`
 returns the stored total and ignores any client-sent points, and
 `POST /api/profile` cannot change points. Rank is computed from
@@ -120,9 +124,17 @@ returns the stored total and ignores any client-sent points, and
   import from there; no second copy of the numbers in any API route.
 - `POST /api/rank` is read-only (returns server points + rank). The old
   client-controlled `_set: { points }` sync is removed.
-- `POST /api/tasks` validates referrals from stored `social_tasks` in the DB
-  (≥ 4), never from a client-sent `taskCount`. Referral bonus is 200 points
-  (`REFERRAL_POINTS`), the same value as the waitlist award.
+- `POST /api/social` credits only NEW social task ids (delta vs the stored
+  array) and pays the referral award when the invitee reaches 4 stored
+  social tasks. Referral bonus is 200 points (`REFERRAL_POINTS`).
+- The X callback issues a signed session cookie (`pfp_x_session`, HMAC with
+  `SESSION_SECRET`). Join, social, and profile writes — and the PII read on
+  profile GET — require the cookie's handle to match the request, so no one
+  can join, write, or read as someone else's handle. Without the secret
+  configured, routes fall back to the legacy unverified behaviour.
+- Join only accepts the 4 known social task ids (whitelisted) — a hand-made
+  join request can no longer claim points for connect_x / robinhood_chain /
+  connect_wallet / waitlist.
 - Social tasks are **self-reported** (open link + 10 s timer) and are not
   proof of a follow/like/repost — X verification is not implemented yet.
   Points from them are participation points, not verified actions.
@@ -135,17 +147,18 @@ returns the stored total and ignores any client-sent points, and
 app/
   page.tsx                 Home + protocol + strain preview
   vault/page.tsx           Redirect → /inventory
-  inventory/page.tsx       Held vials (ownership check not live yet)
-  task/page.tsx            Task hub
-  profile/page.tsx         Profile + mint class
-  upgrade/page.tsx         Lab sealed
-  api/waitlist/route.ts    Allowlist + uniqueness + referral award
-  api/rank/route.ts        Leaderboard + read-only points lookup
+  inventory/page.tsx       Held vials (on-chain ownership check)
+  task/page.tsx            Tasks + referral + points + history + leaderboard
+  profile/page.tsx         Lab ID + account + OpenSea window
+  upgrade/page.tsx         Lab: Extract + Mutate operations
+  api/waitlist/route.ts    Allowlist + uniqueness + referral record
+  api/rank/route.ts        Leaderboard + totals + read-only points lookup
   api/profile/route.ts     Profile read + wallet linking (no points)
-  api/social/route.ts      Store claimed social tasks (self-reported)
-  api/stats/route.ts       Points / rank / referral stats
-  api/tasks/route.ts       Task list + DB-driven referral validation
-  api/x/start|callback     X OAuth
+  api/social/route.ts      Social credit (delta) + referral award at 4 tasks
+  api/stats/route.ts       Points / rank / referral stats / totals
+  api/history/route.ts     Point ledger events for one member
+  api/tasks/route.ts       Task list only
+  api/x/start|callback     X OAuth + signed session cookie
 components/
   Navbar.tsx               HOME / VAULT / LAB / TASK / PROFILE
   ProtocolRoadmap.tsx      Phase cards
@@ -160,6 +173,11 @@ lib/
   points.ts                Local tasks + single source of point values
   social.ts                Social actions (points derived from points.ts)
   referral.ts              ref capture / lock (+200)
+  session.ts               Signed X session cookie (HMAC)
+  board.ts                 Shared leaderboard load + totals
+  point-events.ts          Point ledger (record / list)
+  vial-contract.ts         Vial contract + on-chain balanceOf
+  useOwnedVials.ts         Owned-vial hook for Inventory / Lab
   nhost.ts                 Public GraphQL URL
   nhost-server.ts          Admin-secret fetch
 nhost/schema.sql           Tables + unique constraints + deny-direct RLS

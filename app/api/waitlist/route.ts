@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { isNhostConfigured } from "@/lib/nhost";
 import { nhostAdminRequest } from "@/lib/nhost-server";
-import { REFERRAL_POINTS } from "@/lib/referral";
 import { upsertProfile } from "@/lib/profile-upsert";
 import { WAITLIST_POINTS, socialPointsFor } from "@/lib/points";
+import { SOCIAL_TASK_IDS } from "@/lib/social";
+import { recordPointEvent } from "@/lib/point-events";
+import { requireSession } from "@/lib/session";
 
 const INSERT = `
   mutation InsertWaitlist(
@@ -54,14 +56,6 @@ const FIND_REF = `
   }
 `;
 
-const AWARD = `
-  mutation AwardRef($x: String!, $pts: Int!) {
-    update_waitlist(where: { x_handle: { _ilike: $x } }, _inc: { points: $pts }) {
-      affected_rows
-    }
-  }
-`;
-
 const SET_SOCIAL = `
   mutation SetSocial($x: String!, $tasks: [String!]!, $pts: Int!) {
     update_waitlist(
@@ -100,8 +94,13 @@ export async function POST(req: Request) {
     const xHandle = String(body.xHandle ?? "").replace(/^@/, "").trim().toLowerCase();
     let referredBy = String(body.referredBy ?? "").replace(/^@/, "").trim().toLowerCase();
     if (referredBy && referredBy === xHandle) referredBy = "";
-    const socialTasks = Array.isArray(body.socialTasks)
-      ? body.socialTasks.map((t: string) => String(t))
+    const socialTasks: string[] = Array.isArray(body.socialTasks)
+      ? [...new Set((body.socialTasks as unknown[]).map((t) => String(t)))]
+          // Whitelist: only the 4 known social task ids may earn points.
+          // Before this, any id from lib/points.ts TASKS was accepted, so a
+          // hand-made join request could claim 600 "social" points from
+          // connect_x / robinhood_chain / connect_wallet / waitlist.
+          .filter((t) => (SOCIAL_TASK_IDS as string[]).includes(t))
       : [];
 
     if (!xHandle) return NextResponse.json({ error: "Connect X first" }, { status: 400 });
@@ -112,6 +111,12 @@ export async function POST(req: Request) {
     if (!isNhostConfigured) {
       return NextResponse.json({ error: "Nhost backend is not configured" }, { status: 503 });
     }
+
+    // The X handle must come from the signed session cookie (issued at
+    // OAuth callback), not from a self-asserted string — otherwise anyone
+    // could join as someone else's handle and lock the real owner out.
+    const denied = requireSession(req, xHandle);
+    if (denied) return NextResponse.json({ error: denied.error }, { status: denied.status });
 
     const existing = await lookup(xHandle, wallet, email);
     if (existing.by_wallet[0]) {
@@ -141,9 +146,11 @@ export async function POST(req: Request) {
       points: WAITLIST_POINTS,
     });
 
-    if (validRef) {
-      await nhostAdminRequest(AWARD, { x: validRef, pts: REFERRAL_POINTS });
-    }
+    // Referral award is NOT paid here. The referrer only earns +200 when
+    // the invitee completes 4 social tasks (validated in POST /api/social).
+    // Paying at join rewarded unverified invites and, together with the old
+    // validation endpoint, could pay the same referral twice.
+    await recordPointEvent(xHandle, "JOIN", WAITLIST_POINTS);
 
     // Social points are computed server-side from the single source of truth
     // (lib/points.ts). Note: the underlying tasks are still self-reported
@@ -155,6 +162,7 @@ export async function POST(req: Request) {
       } catch {
         /* column may be missing until SQL is run */
       }
+      await recordPointEvent(xHandle, "SOCIAL", socialPts, { tasks: socialTasks });
     }
 
     await upsertProfile({ xHandle, wallet, email, points: WAITLIST_POINTS + socialPts });
@@ -163,7 +171,8 @@ export async function POST(req: Request) {
       ok: true,
       stored: "nhost",
       id: data.insert_waitlist_one?.id,
-      referralAwarded: Boolean(validRef),
+      referralAwarded: false,
+      referralPending: Boolean(validRef),
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Waitlist failed";
@@ -186,12 +195,11 @@ export async function GET(req: Request) {
 
   try {
     const existing = await lookup(xHandle, wallet, email);
+    // Only the matching row is returned. The taken/oracle flags were
+    // removed: they let anyone enumerate which wallets, handles and emails
+    // are already on the waitlist.
     return NextResponse.json({
       ok: true,
-      walletTaken: Boolean(existing.by_wallet[0]),
-      xTaken: Boolean(existing.by_x[0]),
-      emailTaken: Boolean(existing.by_email[0]),
-      lockedWallet: existing.by_x[0]?.wallet ?? existing.by_wallet[0]?.wallet ?? null,
       entry: existing.by_x[0] || existing.by_wallet[0] || existing.by_email[0] || null,
     });
   } catch (err) {

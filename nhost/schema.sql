@@ -24,6 +24,7 @@ alter table public.waitlist add column if not exists points integer not null def
 alter table public.waitlist add column if not exists referred_by text;
 alter table public.waitlist add column if not exists x_user_id text;
 alter table public.waitlist add column if not exists social_tasks text[] not null default '{}';
+alter table public.waitlist add column if not exists referral_awarded boolean not null default false;
 
 create table if not exists public.profiles (
   id uuid primary key default gen_random_uuid(),
@@ -58,3 +59,36 @@ drop policy if exists "profiles_update" on public.profiles;
 drop policy if exists "profiles_insert" on public.profiles;
 drop policy if exists "profiles_no_direct_access" on public.profiles;
 create policy "profiles_no_direct_access" on public.profiles for all using (false) with check (false);
+
+-- Point ledger: one row per server-side point change (JOIN / SOCIAL /
+-- REFERRAL) so a member's balance can be audited and shown as a history.
+-- The API writes it best-effort via the admin secret; it is never read or
+-- written directly by clients. Track this table in Hasura after running
+-- this SQL, or the /api/history query will fail (the route degrades
+-- gracefully to the JOIN event synthesized from the waitlist row).
+create table if not exists public.point_events (
+  id uuid primary key default gen_random_uuid(),
+  x_handle text not null,
+  event text not null,
+  points integer not null default 0,
+  meta jsonb,
+  created_at timestamptz not null default now()
+);
+create index if not exists point_events_x_handle_created_idx
+  on public.point_events (x_handle, created_at desc);
+
+alter table public.point_events enable row level security;
+drop policy if exists "point_events_no_direct_access" on public.point_events;
+create policy "point_events_no_direct_access" on public.point_events for all using (false) with check (false);
+
+-- Backfill (idempotent): one JOIN event per member who joined before the
+-- ledger existed, dated at their join. Social/referral points already in
+-- a balance stay unitemized and are shown as "EARLIER ACTIVITY" in the
+-- history UI — they cannot be dated from the data that exists.
+insert into public.point_events (x_handle, event, points, created_at)
+select w.x_handle, 'JOIN', 150, w.created_at
+from public.waitlist w
+where not exists (
+  select 1 from public.point_events pe
+  where pe.x_handle = w.x_handle and pe.event = 'JOIN'
+);

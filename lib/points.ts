@@ -1,13 +1,22 @@
+// Server point model (the only points that exist — the server is the
+// authority, and the UI shows server points):
+//   JOIN WAITLIST .......... +150
+//   SOCIAL TASKS (4) ....... +50 / +25 / +25 / +25 = +125 max
+//   REFERRAL (per invitee) . +200, paid once when the invitee finishes
+//                            4 social tasks (validated in POST /api/social)
+// CONNECT WALLET / ROBINHOOD CHAIN / CONNECT X are progress steps, not
+// point awards — they used to carry 100/150/200 points in this list while
+// the server never credited them, so local and server points never agreed.
+// They are 0 here now. `visit_lab` is removed: no code ever completed it.
 export const TASKS = [
-  { id: "connect_wallet", label: "CONNECT WALLET", points: 100, hint: "Link an EVM wallet" },
-  { id: "robinhood_chain", label: "SWITCH TO ROBINHOOD CHAIN", points: 150, hint: "Network 4663" },
-  { id: "connect_x", label: "CONNECT X", points: 200, hint: "Link your X account" },
+  { id: "connect_wallet", label: "CONNECT WALLET", points: 0, hint: "Link an EVM wallet" },
+  { id: "robinhood_chain", label: "SWITCH TO ROBINHOOD CHAIN", points: 0, hint: "Network 4663" },
+  { id: "connect_x", label: "CONNECT X", points: 0, hint: "Link your X account" },
   { id: "follow_x", label: "FOLLOW @PFPHOOD", points: 50, hint: "Follow official X" },
   { id: "like_post", label: "LIKE POST", points: 25, hint: "Like official post" },
   { id: "repost_post", label: "REPOST", points: 25, hint: "Repost official post" },
   { id: "comment_post", label: "COMMENT", points: 25, hint: "Reply official post" },
   { id: "waitlist", label: "JOIN WAITLIST", points: 150, hint: "Reserve lab access" },
-  { id: "visit_lab", label: "ENTER THE LAB", points: 50, hint: "Open Upgrade once" },
 ] as const;
 
 export type TaskId = (typeof TASKS)[number]["id"] | string;

@@ -45,7 +45,16 @@ export default function SocialTasks({ enabled = false }: { enabled?: boolean }) 
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ xHandle: x, tasks: next }),
-      }).catch(() => {});
+      })
+        .then((r) => {
+          // 401 = the signed X session is gone; the task is done locally
+          // but the server did not credit it. Tell the page to show the
+          // reconnect banner instead of failing silently.
+          if (r.status === 401 && typeof window !== "undefined") {
+            window.dispatchEvent(new Event("pfp-session-expired"));
+          }
+        })
+        .catch(() => {});
     }
   };
 
