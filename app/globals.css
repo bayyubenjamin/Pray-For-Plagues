@@ -1,3 +1,29 @@
+/* Display font "Plague": letters come from Another Danger Slanted (demo),
+   but that font maps digits and numeric punctuation to BLANK outlines, so
+   every number in font-bangers rendered invisible (points, rank, task
+   counts, supply). The Bangers face below is declared first and covers
+   only digits + numeric punctuation; every other character falls through
+   to the plague face. Bangers is SIL OFL licensed. */
+@font-face {
+  font-family: "Plague";
+  src: url("./fonts/bangers-digits.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0030-0039, U+0023, U+002B, U+002C, U+002D, U+002E, U+002F, U+0025, U+2013, U+2014;
+}
+@font-face {
+  font-family: "Plague";
+  src: url("./fonts/plague.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  /* Everything EXCEPT the digits + numeric punctuation above: without this
+     exclusion the browser keeps picking this face (blank digits) for
+     numbers even though the Bangers face is declared first. */
+  unicode-range: U+0-22, U+24, U+26-2A, U+3A-2012, U+2015-10FFFF;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

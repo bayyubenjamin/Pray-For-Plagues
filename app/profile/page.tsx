@@ -44,6 +44,7 @@ export default function ProfilePage() {
     joined: false,
   });
   const [mismatch, setMismatch] = useState("");
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -80,6 +81,7 @@ export default function ProfilePage() {
   const connected = (profile?.connected_wallet || (isConnected ? address : "") || "").toLowerCase();
   const match = official && connected && official === connected;
   const joined = Boolean(stats.joined || stats.rank || profile?.email || waitlistWallet);
+  const refLink = handle ? `https://prayforplagues.xyz/task?ref=${encodeURIComponent(handle)}` : "";
 
   return (
     <div className="w-full max-w-3xl mx-auto px-4 py-12 flex flex-col gap-4">
@@ -88,14 +90,17 @@ export default function ProfilePage() {
       <div className="grid grid-cols-3 gap-2">
         <PanelCard title="POINTS" compact>
           <p className="font-bangers text-2xl sm:text-3xl text-green text-aura leading-none">{stats.points}</p>
+          <p className="mt-1 font-tech text-[9px] tracking-widest text-zinc-500">TASKS + REFERRALS</p>
         </PanelCard>
         <PanelCard title="RANK" compact>
           <p className="font-bangers text-2xl sm:text-3xl text-green text-aura leading-none">{stats.rank ?? "\u2014"}</p>
+          <p className="mt-1 font-tech text-[9px] tracking-widest text-zinc-500">WAITLIST POSITION</p>
         </PanelCard>
         <PanelCard title="TASK" compact>
           <p className="font-bangers text-2xl sm:text-3xl text-green text-aura leading-none">
             {stats.taskDone}/{stats.taskMax}
           </p>
+          <p className="mt-1 font-tech text-[9px] tracking-widest text-zinc-500">COMPLETED</p>
         </PanelCard>
       </div>
 
@@ -112,6 +117,24 @@ export default function ProfilePage() {
             <p className="font-bangers text-2xl text-green text-aura leading-none">{stats.refPending}</p>
           </div>
         </div>
+        <p className="mt-3 font-tech text-[10px] leading-relaxed tracking-widest text-zinc-400">
+          VALID — REFERRAL JOINED THE WAITLIST · PENDING — INVITED, NOT JOINED YET
+        </p>
+        {handle ? (
+          <button
+            type="button"
+            onClick={() => {
+              navigator.clipboard.writeText(refLink);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 2000);
+            }}
+            className="mt-3 w-full text-left px-4 py-3 border border-green/30 text-green font-tech text-[10px] tracking-widest break-all hover:bg-darkGreen"
+          >
+            {copied ? "COPIED" : refLink}
+          </button>
+        ) : (
+          <p className="mt-3 font-tech text-[10px] tracking-widest text-zinc-400">CONNECT X TO GET YOUR LINK.</p>
+        )}
       </PanelCard>
 
       <PanelCard title="X">
