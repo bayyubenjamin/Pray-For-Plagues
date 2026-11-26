@@ -37,7 +37,7 @@ export default function InventoryPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-12 pb-24">
-      <SectionTitle title="INVENTORY" subtitle="HELD VIALS ONLY — EXTRACT AND MUTATE LIVE IN THE LAB" />
+      <SectionTitle title="INVENTORY" subtitle="HELD VIALS ONLY — UPGRADE AND EXTRACT LIVE IN THE LAB" />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-8">
         <PanelCard title="WALLET" compact>
@@ -143,8 +143,8 @@ export default function InventoryPage() {
               body: "$PLAGUES is planned to be claimed from a vial you own. The token is not live — see the Lab.",
             },
             {
-              title: "MUTATE",
-              body: "Lab is planned to change stats on a held vial. No upgrade path is live yet — see the Lab.",
+              title: "UPGRADE",
+              body: "Lab upgrades a held vial one tier up — Common to Mythic, paid in $PLAGUES + points. No upgrade path is live yet — see the Lab.",
             },
           ].map((item) => (
             <PanelCard key={item.title} title={item.title}>

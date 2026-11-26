@@ -5,7 +5,7 @@ import { robinhoodChain } from "./config";
  * Lab contracts (Robinhood Chain 4663) — the on-chain upgrade terminal.
  *
  * Both addresses come from env and are UNSET until the contracts deploy:
- *   NEXT_PUBLIC_LAB_CONTRACT     — the Lab operator (mutate + extract)
+ *   NEXT_PUBLIC_LAB_CONTRACT     — the Lab operator (upgrade + extract)
  *   NEXT_PUBLIC_PLAGUES_TOKEN    — the $PLAGUES ERC-20 (balance read only)
  *
  * While unset, the Lab page renders the full terminal with every action
@@ -15,9 +15,10 @@ import { robinhoodChain } from "./config";
  *
  * DRAFT INTERFACE — the function names and argument order below are the
  * prepared interface for the Lab contract. They MUST match the deployed
- * contract; if the real contract names a function differently (e.g.
- * `upgrade` instead of `mutate`, or a different stat encoding), update
- * this file before the buttons go live, or the calls will revert.
+ * contract; if the real contract names a function differently (e.g. a
+ * different upgrade signature), update this file before the buttons go
+ * live, or the calls will revert. Upgrade costs ($PLAGUES + points) are
+ * set by the contract, not by the UI — see lib/upgrade-path.ts.
  */
 export const LAB_CONTRACT_ADDRESS = (process.env.NEXT_PUBLIC_LAB_CONTRACT || "").trim();
 export const PLAGUES_TOKEN_ADDRESS = (process.env.NEXT_PUBLIC_PLAGUES_TOKEN || "").trim();
@@ -34,19 +35,12 @@ export function blockscoutTxUrl(hash: string): string {
   return `https://robinhoodchain.blockscout.com/tx/${hash}`;
 }
 
-/** Mutate stat ids, in the order the draft Lab ABI expects them. */
-export const MUTATE_STATS = ["PURITY", "STABILITY", "POTENCY"] as const;
-export type MutateStat = (typeof MUTATE_STATS)[number];
-
 export const LAB_ABI = [
   {
     type: "function",
-    name: "mutate",
+    name: "upgrade",
     stateMutability: "nonpayable",
-    inputs: [
-      { name: "tokenId", type: "uint256" },
-      { name: "stat", type: "uint8" },
-    ],
+    inputs: [{ name: "tokenId", type: "uint256" }],
     outputs: [],
   },
   {

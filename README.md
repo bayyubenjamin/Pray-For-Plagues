@@ -143,23 +143,32 @@ returns the stored total and ignores any client-sent points, and
 
 ## Lab (on-chain upgrade, prepared)
 
-The Lab is the on-chain upgrade terminal: select a vial you hold, then
-MUTATE one stat (purity / stability / potency) or EXTRACT $PLAGUES from it.
+The Lab upgrades a held vial one tier at a time — COMMON → RARE → EPIC →
+LEGENDARY → MYTHIC — paid in $PLAGUES + waitlist points. That is the
+ecosystem loop: extract $PLAGUES from a vial you own, earn points on Task,
+spend both to climb a tier. The upgrade ladder lives in
+`lib/upgrade-path.ts`; costs are null (shown as TBA) until the Lab contract
+sets them — the UI never invents a number.
+
+Tap any vial in the gallery and it appears at the top with its upgrade
+path. Ownership is read on-chain: owned token ids map to rarities through
+the fixed token ranges (`lib/protocol.ts` min/max), so a vial the wallet
+does not hold shows YOU DON'T HAVE THIS VIAL. There is no manual token-id
+input — selection is always by tapping a vial.
+
 Both actions are real wagmi writes (`useWriteContract` +
 `useWaitForTransactionReceipt`, hash linked to Blockscout) — but they are
 gated on the contracts existing:
 
-- `NEXT_PUBLIC_LAB_CONTRACT` — the Lab operator (`mutate(uint256, uint8)`,
+- `NEXT_PUBLIC_LAB_CONTRACT` — the Lab operator (`upgrade(uint256)`,
   `extract(uint256)`). While unset, both buttons are sealed.
 - `NEXT_PUBLIC_PLAGUES_TOKEN` — the $PLAGUES ERC-20, balance read only.
 - `NEXT_PUBLIC_VIAL_CONTRACT` — the vial ERC-721; the selector reads owned
-  token ids via `tokenOfOwnerByIndex` (falls back to manual token-id entry
-  if the collection is not enumerable).
+  token ids via `tokenOfOwnerByIndex` (empty list if the collection is not
+  enumerable — ownership then shows from the contract read, never guessed).
 
 The ABI in `lib/lab-contracts.ts` is a prepared draft: function names and
 argument order MUST match the deployed Lab contract, or the calls revert.
-Effect amounts and costs are set by the contract, not by the UI — the page
-never invents them.
 
 ## Repository map
 
@@ -198,6 +207,7 @@ lib/
   point-events.ts          Point ledger (record / list)
   vial-contract.ts         Vial contract + on-chain balanceOf + token ids
   lab-contracts.ts         Lab + $PLAGUES contracts, draft ABI, guards
+  upgrade-path.ts          Upgrade ladder + token-id to rarity mapping
   useOwnedVials.ts         Owned-vial hook for Inventory / Lab
   nhost.ts                 Public GraphQL URL
   nhost-server.ts          Admin-secret fetch

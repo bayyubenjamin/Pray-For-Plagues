@@ -40,7 +40,7 @@ export const PHASES: Phase[] = [
     code: "MUTATION",
     status: "LOCKED",
     title: "LAB",
-    blurb: "Hold a vial, then mutate it here. Contracts are not live.",
+    blurb: "Hold a vial, then upgrade it here — Common to Mythic, paid in $PLAGUES + points. Contracts are not live.",
   },
   {
     id: 4,
@@ -66,17 +66,21 @@ export type RaritySpec = {
   perk: string;
   // Token ID range on the 2,000-vial collection (matches the OpenSea metadata).
   range: string;
+  // Numeric bounds of the same range — used to map an owned token id to
+  // its rarity (e.g. token #42 is COMMON, #1500 is RARE).
+  min: number;
+  max: number;
   // Web-optimized vial art served from public/ (640×960 JPG).
   // Masters for OpenSea/IPFS live in assets/nft/images/.
   image: string;
 };
 
 export const RARITY_SPECS: RaritySpec[] = [
-  { rarity: "COMMON", supply: 1100, dose: "1–2", line: "The standard-issue vial. The backbone of the outbreak.", perk: "Steady extract yield.", range: "#1–1100", image: "/images/vials/common.jpg" },
-  { rarity: "RARE", supply: 500, dose: "2–3", line: "Reinforced glass, stronger strain.", perk: "Higher purity baseline.", range: "#1101–1600", image: "/images/vials/rare.jpg" },
-  { rarity: "EPIC", supply: 250, dose: "3–4", line: "A low-supply band for serious collectors.", perk: "Strong potency curve.", range: "#1601–1850", image: "/images/vials/epic.jpg" },
-  { rarity: "LEGENDARY", supply: 120, dose: "4–5", line: "Scarce. Handwritten label, gold seal.", perk: "Near-peak stats across the board.", range: "#1851–1970", image: "/images/vials/legendary.jpg" },
-  { rarity: "MYTHIC", supply: 30, dose: "5+", line: "Thirty vials only. The rarest strain in the lab.", perk: "Maximum purity and potency.", range: "#1971–2000", image: "/images/vials/mythic.jpg" },
+  { rarity: "COMMON", supply: 1100, dose: "1–2", line: "The standard-issue vial. The backbone of the outbreak.", perk: "Steady extract yield.", range: "#1–1100", min: 1, max: 1100, image: "/images/vials/common.jpg" },
+  { rarity: "RARE", supply: 500, dose: "2–3", line: "Reinforced glass, stronger strain.", perk: "Higher purity baseline.", range: "#1101–1600", min: 1101, max: 1600, image: "/images/vials/rare.jpg" },
+  { rarity: "EPIC", supply: 250, dose: "3–4", line: "A low-supply band for serious collectors.", perk: "Strong potency curve.", range: "#1601–1850", min: 1601, max: 1850, image: "/images/vials/epic.jpg" },
+  { rarity: "LEGENDARY", supply: 120, dose: "4–5", line: "Scarce. Handwritten label, gold seal.", perk: "Near-peak stats across the board.", range: "#1851–1970", min: 1851, max: 1970, image: "/images/vials/legendary.jpg" },
+  { rarity: "MYTHIC", supply: 30, dose: "5+", line: "Thirty vials only. The rarest strain in the lab.", perk: "Maximum purity and potency.", range: "#1971–2000", min: 1971, max: 2000, image: "/images/vials/mythic.jpg" },
 ];
 
 export type AllowlistClassId = "PATIENT_ZERO" | "QUARANTINE" | "PUBLIC" | "UNLISTED";
