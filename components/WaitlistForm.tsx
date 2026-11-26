@@ -136,9 +136,9 @@ export default function WaitlistForm({
       <SocialTasks enabled={ready} />
 
       <form onSubmit={onSubmit} className="w-full flex flex-col gap-3">
-        <input value={wallet} disabled={!ready} onChange={(e) => setWallet(e.target.value)} placeholder="WALLET 0x..." className="w-full px-4 py-3 bg-black/80 border border-green/30 text-green font-tech text-sm tracking-widest outline-none focus:border-green box-aura disabled:opacity-40" />
-        <input type="email" required disabled={!ready} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="EMAIL" className="w-full px-4 py-3 bg-black/80 border border-green/30 text-green font-tech text-sm tracking-widest uppercase outline-none focus:border-green box-aura disabled:opacity-40" />
-        <input readOnly={refLocked} disabled={!ready && !refLocked} value={refCode} onChange={(e) => { if (!refLocked) setRefCode(e.target.value); }} placeholder="REF CODE (X HANDLE)" className="w-full px-4 py-3 bg-black/80 border border-green/30 text-green font-tech text-sm tracking-widest outline-none focus:border-green box-aura disabled:opacity-40 read-only:opacity-70" />
+        <input value={wallet} disabled={!ready} onChange={(e) => setWallet(e.target.value)} placeholder="WALLET 0x..." className="w-full px-4 py-3 bg-black/80 border border-green/30 text-green font-tech text-base tracking-widest outline-none focus:border-green box-aura disabled:opacity-40" />
+        <input type="email" required disabled={!ready} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="EMAIL" className="w-full px-4 py-3 bg-black/80 border border-green/30 text-green font-tech text-base tracking-widest uppercase outline-none focus:border-green box-aura disabled:opacity-40" />
+        <input readOnly={refLocked} disabled={!ready && !refLocked} value={refCode} onChange={(e) => { if (!refLocked) setRefCode(e.target.value); }} placeholder="REF CODE (X HANDLE)" className="w-full px-4 py-3 bg-black/80 border border-green/30 text-green font-tech text-base tracking-widest outline-none focus:border-green box-aura disabled:opacity-40 read-only:opacity-70" />
         {refLocked && <p className="font-tech text-[10px] text-green tracking-widest">REF LOCKED FROM INVITE LINK</p>}
         <button type="submit" disabled={!ready || status === "loading"} className="px-8 py-3 bg-green text-black font-tech font-bold text-sm tracking-[0.2em] hover:bg-green-bright uppercase box-aura disabled:opacity-50">
           {status === "loading" ? "SAVING..." : "JOIN WAITLIST"}

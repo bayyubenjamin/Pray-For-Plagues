@@ -136,11 +136,11 @@ export default function TaskPage() {
       <PanelCard title="REFERRAL">
         <div className="grid grid-cols-2 gap-2 mb-4">
           <div className="border border-green/20 p-3">
-            <p className="font-tech text-[9px] text-zinc-400 tracking-widest">VALID</p>
+            <p className="font-tech text-[10px] text-zinc-400 tracking-widest">VALID</p>
             <p className="font-bangers text-2xl text-green text-aura leading-none mt-1">{stats.refValid}</p>
           </div>
           <div className="border border-green/20 p-3">
-            <p className="font-tech text-[9px] text-zinc-400 tracking-widest">PENDING</p>
+            <p className="font-tech text-[10px] text-zinc-400 tracking-widest">PENDING</p>
             <p className="font-bangers text-2xl text-green text-aura leading-none mt-1">{stats.refPending}</p>
           </div>
         </div>

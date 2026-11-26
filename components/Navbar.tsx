@@ -20,10 +20,11 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="hover:opacity-80 transition">
             <Image
-              src="/images/logo.png"
+              src="/images/logo.webp"
               alt="Logo"
               width={40}
               height={40}
+              priority
               className="rounded-full border-2 border-green shadow-[0_0_15px_rgba(74,222,128,0.6)]"
             />
           </Link>
@@ -45,17 +46,18 @@ export default function Navbar() {
       <header className="md:hidden fixed top-0 left-0 w-full z-50 bg-[#050705]/90 backdrop-blur-md border-b border-green/20 px-4 h-14 flex items-center justify-between">
         <Link href="/" className="hover:opacity-80 transition">
           <Image
-            src="/images/logo.png"
+            src="/images/logo.webp"
             alt="Logo"
             width={34}
             height={34}
+            priority
             className="rounded-full border border-green shadow-[0_0_10px_rgba(74,222,128,0.5)]"
           />
         </Link>
         <ConnectWallet compact />
       </header>
 
-      <nav className="md:hidden fixed bottom-0 left-0 w-full z-50 bg-[#050705]/90 backdrop-blur-md border-t border-green/30 px-4 py-2 flex items-center justify-around font-tech text-[10px] tracking-wider">
+      <nav className="md:hidden fixed bottom-0 left-0 w-full z-50 bg-[#050705]/90 backdrop-blur-md border-t border-green/30 px-4 py-2 flex items-center justify-around font-tech text-[11px] tracking-wider">
         <Link href="/" className={`flex flex-col items-center transition group py-1 ${isActive('/') ? 'text-green font-bold' : 'text-gray-400 hover:text-green'}`}>
           <svg className={`w-5 h-5 transition ${isActive('/') ? 'text-green drop-shadow-[0_0_8px_rgba(74,222,128,0.8)]' : 'group-hover:drop-shadow-[0_0_8px_rgba(74,222,128,0.8)]'}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>

@@ -132,7 +132,7 @@ export default function ConnectWallet({ compact }: { compact?: boolean }) {
       <button onClick={handleConnect} disabled={isPending} className="px-4 py-2 border border-green text-green bg-black hover:bg-darkGreen font-tech uppercase text-xs sm:text-sm tracking-wider box-aura">
         {isPending ? "CONNECTING..." : "CONNECT WALLET"}
       </button>
-      {mismatch && <p className="font-tech text-[9px] text-red-500 tracking-widest text-right">{mismatch}</p>}
+      {mismatch && <p className="font-tech text-[10px] text-red-500 tracking-widest text-right">{mismatch}</p>}
     </div>
   );
 }

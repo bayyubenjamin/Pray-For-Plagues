@@ -70,7 +70,7 @@ export default function BackgroundEffects() {
           muted
           playsInline
           preload="none"
-          poster="/images/hero-hooded.jpg"
+          poster="/images/hero-hooded.webp"
           className="w-full h-full object-cover object-top opacity-85"
         >
           <source src="/images/hero-hooded.mp4" type="video/mp4" />
@@ -86,7 +86,7 @@ export default function BackgroundEffects() {
           muted
           playsInline
           preload="none"
-          poster="/images/hero-hooded.jpg"
+          poster="/images/hero-hooded.webp"
           className="w-full h-full object-cover object-top opacity-85"
         >
           <source src="/images/hero-mobile.mp4" type="video/mp4" />

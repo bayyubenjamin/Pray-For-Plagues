@@ -99,7 +99,7 @@ export default function InventoryPage() {
             </div>
           </div>
 
-          <div className="card-panel p-4 sm:p-6">
+          <div className="card-panel cv-auto p-4 sm:p-6">
             <p className="font-tech text-xs tracking-[0.25em] text-zinc-300">THE FIVE STRAINS</p>
             <h3 className="mt-2 font-bangers text-2xl sm:text-3xl text-green tracking-wide">VIAL ART BY RARITY</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mt-5">

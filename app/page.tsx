@@ -38,7 +38,7 @@ export default function Home() {
         </ScrollReveal>
       </section>
 
-      <section className="w-full max-w-6xl mx-auto px-4 py-16 sm:py-20">
+      <section className="cv-auto w-full max-w-6xl mx-auto px-4 py-16 sm:py-20">
         <ScrollReveal>
           <SectionTitle title="OUTBREAK PROTOCOL" subtitle="MINT ON OPENSEA · UTILITY ON THIS LAB" />
         </ScrollReveal>
@@ -52,7 +52,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="w-full max-w-6xl mx-auto px-4 py-16 sm:py-20">
+      <section className="cv-auto w-full max-w-6xl mx-auto px-4 py-16 sm:py-20">
         <ScrollReveal>
           <SectionTitle title="ANTIDOTE UTILITY" subtitle="WHAT A HELD VIAL DOES" />
         </ScrollReveal>
