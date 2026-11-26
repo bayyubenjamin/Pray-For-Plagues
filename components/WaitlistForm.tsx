@@ -15,9 +15,11 @@ const WALLET_RE = /^0x[a-fA-F0-9]{40}$/;
 export default function WaitlistForm({
   xHandle,
   hideTaskLink = false,
+  hideSocialTasks = false,
 }: {
   xHandle?: string | null;
   hideTaskLink?: boolean;
+  hideSocialTasks?: boolean;
 }) {
   const [wallet, setWallet] = useState("");
   const [email, setEmail] = useState("");
@@ -121,11 +123,17 @@ export default function WaitlistForm({
 
   return (
     <div className="w-full flex flex-col gap-4">
-      <ol className="font-tech text-[10px] text-zinc-400 tracking-widest leading-relaxed space-y-1">
-        <li>1. CONNECT X</li>
-        <li>2. SOCIAL TASKS — 10S THEN CHECK</li>
-        <li>3. PASTE WALLET + EMAIL</li>
-      </ol>
+      {hideSocialTasks ? (
+        <p className="font-tech text-[10px] text-zinc-400 tracking-widest leading-relaxed">
+          PASTE WALLET + EMAIL. ONE X = ONE WALLET = ONE EMAIL — LOCKED AFTER JOIN.
+        </p>
+      ) : (
+        <ol className="font-tech text-[10px] text-zinc-400 tracking-widest leading-relaxed space-y-1">
+          <li>1. CONNECT X</li>
+          <li>2. SOCIAL TASKS — 10S THEN CHECK</li>
+          <li>3. PASTE WALLET + EMAIL</li>
+        </ol>
+      )}
 
       {!ready && (
         <a href="/api/x/start" className="inline-block px-6 py-3 border border-green text-green font-tech text-xs tracking-widest text-center hover:bg-darkGreen box-aura">
@@ -133,7 +141,7 @@ export default function WaitlistForm({
         </a>
       )}
       {ready && <p className="font-tech text-[10px] text-green tracking-widest">X CONNECTED @{handle}</p>}
-      <SocialTasks enabled={ready} />
+      {!hideSocialTasks && <SocialTasks enabled={ready} />}
 
       <form onSubmit={onSubmit} className="w-full flex flex-col gap-3">
         <input value={wallet} disabled={!ready} onChange={(e) => setWallet(e.target.value)} placeholder="WALLET 0x..." className="w-full px-4 py-3 bg-black/80 border border-green/30 text-green font-tech text-base tracking-widest outline-none focus:border-green box-aura disabled:opacity-40" />

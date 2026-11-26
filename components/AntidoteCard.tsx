@@ -15,21 +15,31 @@ export default function AntidoteCard({
   nft,
   soon = false,
   briefing = false,
-  action = "USE",
+  onSelect,
 }: {
   nft: AntidoteNFT;
-  onClick?: () => void;
-  actionLabel?: string;
   soon?: boolean;
   briefing?: boolean;
-  action?: string;
+  onSelect?: (nft: AntidoteNFT) => void;
 }) {
   const spec = RARITY_SPECS.find((s) => s.rarity === nft.rarity);
   const dim = soon && !briefing;
   const caption = spec?.line || spec?.perk || "";
 
   return (
-    <div className="card-panel card-lift panel-border p-3 flex flex-col gap-3 relative group">
+    <article
+      onClick={() => onSelect?.(nft)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect?.(nft);
+        }
+      }}
+      tabIndex={0}
+      role="button"
+      aria-label={`${nft.rarity} vial #${nft.id}, view details`}
+      className="card-panel card-lift panel-border p-3 flex flex-col gap-3 relative group cursor-pointer focus-visible:outline-none"
+    >
       <div className="aspect-[2/3] bg-black border border-green/20 relative overflow-hidden transition-colors duration-300 group-hover:border-green/50">
         {spec?.image && (
           <Image
@@ -61,9 +71,9 @@ export default function AntidoteCard({
         <p className="font-tech text-xs leading-relaxed text-zinc-300">{caption}</p>
       )}
 
-      <button type="button" disabled aria-disabled="true" className="w-full py-2.5 border border-green/30 text-zinc-400 font-tech uppercase text-xs tracking-[0.2em] cursor-not-allowed opacity-50">
-        {action}
-      </button>
-    </div>
+      <span className="mt-auto block w-full py-2.5 border border-green/30 text-green font-tech uppercase text-xs tracking-[0.2em] text-center group-hover:bg-darkGreen transition-colors">
+        VIEW DETAILS
+      </span>
+    </article>
   );
 }

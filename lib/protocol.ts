@@ -64,17 +64,19 @@ export type RaritySpec = {
   dose: string;
   line: string;
   perk: string;
+  // Token ID range on the 2,000-vial collection (matches the OpenSea metadata).
+  range: string;
   // Web-optimized vial art served from public/ (640×960 JPG).
   // Masters for OpenSea/IPFS live in assets/nft/images/.
   image: string;
 };
 
 export const RARITY_SPECS: RaritySpec[] = [
-  { rarity: "COMMON", supply: 1100, dose: "1–2", line: "Largest band.", perk: "", image: "/images/vials/common.jpg" },
-  { rarity: "RARE", supply: 500, dose: "2–3", line: "Uncommon band.", perk: "", image: "/images/vials/rare.jpg" },
-  { rarity: "EPIC", supply: 250, dose: "3–4", line: "Low supply band.", perk: "", image: "/images/vials/epic.jpg" },
-  { rarity: "LEGENDARY", supply: 120, dose: "4–5", line: "Scarce band.", perk: "", image: "/images/vials/legendary.jpg" },
-  { rarity: "MYTHIC", supply: 30, dose: "5+", line: "Lowest supply band.", perk: "", image: "/images/vials/mythic.jpg" },
+  { rarity: "COMMON", supply: 1100, dose: "1–2", line: "The standard-issue vial. The backbone of the outbreak.", perk: "Steady extract yield.", range: "#1–1100", image: "/images/vials/common.jpg" },
+  { rarity: "RARE", supply: 500, dose: "2–3", line: "Reinforced glass, stronger strain.", perk: "Higher purity baseline.", range: "#1101–1600", image: "/images/vials/rare.jpg" },
+  { rarity: "EPIC", supply: 250, dose: "3–4", line: "A low-supply band for serious collectors.", perk: "Strong potency curve.", range: "#1601–1850", image: "/images/vials/epic.jpg" },
+  { rarity: "LEGENDARY", supply: 120, dose: "4–5", line: "Scarce. Handwritten label, gold seal.", perk: "Near-peak stats across the board.", range: "#1851–1970", image: "/images/vials/legendary.jpg" },
+  { rarity: "MYTHIC", supply: 30, dose: "5+", line: "Thirty vials only. The rarest strain in the lab.", perk: "Maximum purity and potency.", range: "#1971–2000", image: "/images/vials/mythic.jpg" },
 ];
 
 export type AllowlistClassId = "PATIENT_ZERO" | "QUARANTINE" | "PUBLIC" | "UNLISTED";

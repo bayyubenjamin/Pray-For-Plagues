@@ -27,6 +27,41 @@ function liveHandle() {
   return getXSession() || loadPlayer().xHandle || "";
 }
 
+function Step({
+  num,
+  title,
+  desc,
+  locked,
+  lockedNote,
+  children,
+}: {
+  num: string;
+  title: string;
+  desc: string;
+  locked?: boolean;
+  lockedNote?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <PanelCard className={locked ? "opacity-70" : ""}>
+      <div className="flex items-baseline gap-3 mb-1">
+        <span className="font-bangers text-2xl text-green leading-none shrink-0">{num}</span>
+        <h3 className="font-bangers text-2xl text-white tracking-wide leading-none">{title}</h3>
+        {locked && (
+          <span className="ml-auto shrink-0 px-2 py-0.5 border border-green/30 font-tech text-[10px] tracking-widest text-zinc-400">
+            LOCKED
+          </span>
+        )}
+      </div>
+      <p className="font-tech text-[11px] tracking-widest text-zinc-400 leading-relaxed mb-5 ml-9">{desc}</p>
+      {locked && lockedNote && (
+        <p className="font-tech text-[10px] tracking-widest text-zinc-400 mb-4 ml-9">{lockedNote}</p>
+      )}
+      <div className="ml-0 sm:ml-9">{children}</div>
+    </PanelCard>
+  );
+}
+
 export default function TaskPage() {
   const [player, setPlayer] = useState<PlayerState>({ completed: [], points: 0 });
   const [stats, setStats] = useState<Stats>({
@@ -89,10 +124,11 @@ export default function TaskPage() {
 
   const handle = player.xHandle || getXSession();
   const refLink = handle ? `https://prayforplagues.xyz/task?ref=${encodeURIComponent(handle)}` : "";
-  const tweetText = `\u{1F9A0}\u{1F9EA} Antidote waitlist is live.\n${refLink}\n#prayforplagues #antidote #plagues`;
+  const tweetText = `Antidote waitlist is live.\n${refLink}\n#prayforplagues #antidote #plagues`;
   const tweetHref = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
   const joined = Boolean(stats.joined || stats.rank);
   const cls = allowlistClassFromRank(stats.rank, joined);
+  const progress = stats.taskMax > 0 ? Math.min(100, Math.round((stats.taskDone / stats.taskMax) * 100)) : 0;
 
   return (
     <div className="w-full max-w-4xl mx-auto px-4 py-12 pb-24 flex flex-col gap-4">
@@ -115,25 +151,70 @@ export default function TaskPage() {
         </PanelCard>
       </div>
 
+      <div className="card-panel p-4 sm:p-5">
+        <div className="flex items-baseline justify-between gap-3">
+          <p className="font-tech text-[10px] tracking-[0.25em] text-white/55">YOUR PROGRESS</p>
+          <p className="font-tech text-[10px] tracking-widest text-green">{progress}%</p>
+        </div>
+        <div className="mt-3 h-1.5 progress-bar-bg">
+          <div className="h-full progress-bar-fill transition-all duration-500" style={{ width: `${progress}%` }} />
+        </div>
+        <p className="mt-3 font-tech text-[10px] tracking-widest text-zinc-400">
+          {stats.taskDone} OF {stats.taskMax} TASKS DONE
+          {joined ? " — YOU ARE ON THE WAITLIST" : " — FINISH THE STEPS BELOW TO JOIN"}
+        </p>
+      </div>
+
       <MintClassCard rank={stats.rank} joined={joined} points={stats.points} />
 
-      <PanelCard title="WAITLIST">
-        <WaitlistForm xHandle={handle} hideTaskLink />
-      </PanelCard>
-
-      <PanelCard title="SOCIAL TASKS">
+      <Step
+        num="01"
+        title="CONNECT X"
+        desc="LINK YOUR X ACCOUNT. EVERYTHING ELSE UNLOCKS FROM HERE."
+      >
         {handle ? (
-          <p className="font-tech text-green text-sm tracking-widest mb-4">CONNECTED @{handle}</p>
+          <div className="flex flex-col gap-2">
+            <p className="font-tech text-green text-sm tracking-widest">CONNECTED @{handle}</p>
+            {xMsg && <p className="font-tech text-[10px] text-green tracking-widest">{xMsg}</p>}
+            <p className="font-tech text-[10px] tracking-widest text-zinc-400">STEPS 02 AND 03 ARE OPEN.</p>
+          </div>
         ) : (
-          <a href="/api/x/start" className="inline-block mb-4 px-6 py-3 border border-green text-green font-tech text-xs tracking-widest hover:bg-darkGreen box-aura">
-            CONNECT X
-          </a>
+          <div className="flex flex-col gap-3">
+            <a href="/api/x/start" className="inline-block px-6 py-3 border border-green text-green font-tech text-xs tracking-widest text-center hover:bg-darkGreen box-aura">
+              CONNECT X
+            </a>
+            <p className="font-tech text-[10px] tracking-widest text-zinc-400">ONE X = ONE WALLET = ONE EMAIL.</p>
+          </div>
         )}
-        {xMsg && <p className="mb-3 font-tech text-[10px] text-green tracking-widest">{xMsg}</p>}
-        <SocialTasks enabled={Boolean(handle)} />
-      </PanelCard>
+      </Step>
 
-      <PanelCard title="REFERRAL">
+      <Step
+        num="02"
+        title="SOCIAL TASKS"
+        desc="FOLLOW, LIKE, REPOST, COMMENT. EACH ONE OPENS X AND CHECKS AFTER 10 SECONDS."
+        locked={!handle}
+        lockedNote="CONNECT X IN STEP 01 TO START."
+      >
+        <SocialTasks enabled={Boolean(handle)} />
+      </Step>
+
+      <Step
+        num="03"
+        title="JOIN WAITLIST"
+        desc="PASTE YOUR WALLET AND EMAIL. LOCKED AFTER YOU JOIN — NO CHANGES."
+        locked={!handle}
+        lockedNote="CONNECT X IN STEP 01 TO JOIN."
+      >
+        <WaitlistForm xHandle={handle} hideTaskLink hideSocialTasks />
+      </Step>
+
+      <Step
+        num="04"
+        title="REFER + CLIMB"
+        desc="SHARE YOUR LINK. EACH VALID REFERRAL IS +200 POINTS FOR YOUR INVITER RANK."
+        locked={!joined}
+        lockedNote="JOIN THE WAITLIST IN STEP 03 TO GET YOUR LINK."
+      >
         <div className="grid grid-cols-2 gap-2 mb-4">
           <div className="border border-green/20 p-3">
             <p className="font-tech text-[10px] text-zinc-400 tracking-widest">VALID</p>
@@ -155,13 +236,13 @@ export default function TaskPage() {
               rel="noreferrer"
               className="w-full px-4 py-3 bg-green text-black font-tech text-xs tracking-widest text-center hover:bg-green-bright"
             >
-              TWEET
+              SHARE ON X
             </a>
           </div>
         ) : (
           <p className="font-tech text-[10px] text-green tracking-widest">CONNECT X TO GET REF LINK.</p>
         )}
-      </PanelCard>
+      </Step>
 
       <PanelCard title="LEADERBOARD" id="board" className="overflow-hidden p-0 sm:p-0">
         <p className="font-tech text-[10px] tracking-widest text-zinc-400 px-5 pt-5 mb-3">TOP 10 · OPENSEA WINDOWS · 1–50 PATIENT ZERO · 51–250 QUARANTINE</p>
