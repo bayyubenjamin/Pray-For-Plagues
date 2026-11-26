@@ -20,7 +20,7 @@ const config: Config = {
         gray: "#777777",
       },
       fontFamily: {
-        bangers: ["var(--font-bangers)", "cursive"],
+        bangers: ["Plague", "cursive"],
         tech: ["var(--font-share-tech-mono)", "monospace"],
       },
       backgroundImage: {

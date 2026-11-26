@@ -137,17 +137,21 @@ export default function TaskPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         <PanelCard title="POINTS" compact>
           <p className="font-bangers text-2xl sm:text-3xl text-green text-aura leading-none">{stats.points}</p>
+          <p className="mt-1 font-tech text-[9px] tracking-widest text-zinc-500">TASKS + REFERRALS</p>
         </PanelCard>
         <PanelCard title="RANK" compact>
           <p className="font-bangers text-2xl sm:text-3xl text-green text-aura leading-none">{stats.rank ?? "\u2014"}</p>
+          <p className="mt-1 font-tech text-[9px] tracking-widest text-zinc-500">WAITLIST POSITION</p>
         </PanelCard>
         <PanelCard title="TASK" compact>
           <p className="font-bangers text-2xl sm:text-3xl text-green text-aura leading-none">
             {stats.taskDone}/{stats.taskMax}
           </p>
+          <p className="mt-1 font-tech text-[9px] tracking-widest text-zinc-500">COMPLETED</p>
         </PanelCard>
         <PanelCard title="WINDOW" compact>
           <p className="font-bangers text-lg sm:text-xl text-green text-aura leading-none">{cls.label}</p>
+          <p className="mt-1 font-tech text-[9px] tracking-widest text-zinc-500">MINT WINDOW</p>
         </PanelCard>
       </div>
 
@@ -215,6 +219,9 @@ export default function TaskPage() {
         locked={!joined}
         lockedNote="JOIN THE WAITLIST IN STEP 03 TO GET YOUR LINK."
       >
+        <p className="font-tech text-[10px] leading-relaxed tracking-widest text-zinc-400 mb-4">
+          VALID — REFERRAL JOINED THE WAITLIST · PENDING — INVITED, NOT JOINED YET
+        </p>
         <div className="grid grid-cols-2 gap-2 mb-4">
           <div className="border border-green/20 p-3">
             <p className="font-tech text-[10px] text-zinc-400 tracking-widest">VALID</p>
