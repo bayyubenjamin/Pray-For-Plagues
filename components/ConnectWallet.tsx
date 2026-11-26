@@ -18,8 +18,11 @@ function isCoarsePointer() {
   return window.matchMedia("(pointer: coarse)").matches;
 }
 
-function friendlyError(err: unknown): string {
+function friendlyError(err: unknown, connector?: "injected" | "walletConnect" | null): string {
   const msg = err instanceof Error ? err.message : "";
+  // Closing the WalletConnect modal rejects the connect promise — that is
+  // a dismissal, not a rejection inside a wallet, so show no red notice.
+  if (connector === "walletConnect" && /rejected|denied|user rejected/i.test(msg)) return "";
   if (/rejected|denied|user rejected/i.test(msg)) return "CONNECTION REJECTED IN WALLET.";
   if (/already|pending/i.test(msg)) return "A WALLET REQUEST IS ALREADY OPEN.";
   return "CONNECTION FAILED. TRY AGAIN.";
@@ -40,6 +43,7 @@ export default function ConnectWallet({ compact }: { compact?: boolean }) {
   const [showHelp, setShowHelp] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const rejecting = useRef(false);
+  const [lastConnector, setLastConnector] = useState<"injected" | "walletConnect" | null>(null);
   const saved = useRef("");
 
   const refreshGate = () => {
@@ -59,7 +63,7 @@ export default function ConnectWallet({ compact }: { compact?: boolean }) {
   // Wagmi surfaces connect/switch failures as error objects — derive the
   // message during render instead of syncing it into state in an effect.
   const errorNotice = connectError
-    ? friendlyError(connectError)
+    ? friendlyError(connectError, lastConnector)
     : switchError
       ? friendlyError(switchError)
       : "";
@@ -113,6 +117,7 @@ export default function ConnectWallet({ compact }: { compact?: boolean }) {
       setNotice("NO WALLET CONNECTOR AVAILABLE.");
       return;
     }
+    setLastConnector("injected");
     connect({ connector: injected, chainId: robinhoodChain.id });
   };
 
@@ -129,6 +134,7 @@ export default function ConnectWallet({ compact }: { compact?: boolean }) {
       setNotice("WALLETCONNECT IS NOT AVAILABLE.");
       return;
     }
+    setLastConnector("walletConnect");
     connect({ connector: wc, chainId: robinhoodChain.id });
   };
 
