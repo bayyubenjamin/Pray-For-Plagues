@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useAccount, useConnect, useDisconnect, useChainId, useSwitchChain } from "wagmi";
 import { formatAddress } from "@/lib/utils";
-import { robinhoodChain } from "@/lib/config";
+import { robinhoodChain, walletConnectEnabled } from "@/lib/config";
 import { completeTask, loadPlayer } from "@/lib/points";
 import { loadWaitlist } from "@/lib/waitlist-local";
 
@@ -116,6 +116,22 @@ export default function ConnectWallet({ compact }: { compact?: boolean }) {
     connect({ connector: injected, chainId: robinhoodChain.id });
   };
 
+  const handleWalletConnect = () => {
+    setNotice("");
+    setShowHelp(false);
+    if (rejecting.current && address && locked && address.toLowerCase() !== locked) {
+      disconnect();
+      setMismatch(`WRONG WALLET. SWITCH ACCOUNT IN YOUR WALLET APP TO ${locked.slice(0, 6)}...${locked.slice(-4)} THEN CONNECT.`);
+      return;
+    }
+    const wc = connectors.find((c) => c.id === "walletConnect");
+    if (!wc) {
+      setNotice("WALLETCONNECT IS NOT AVAILABLE.");
+      return;
+    }
+    connect({ connector: wc, chainId: robinhoodChain.id });
+  };
+
   const handleCopy = async () => {
     if (!address) return;
     await navigator.clipboard.writeText(address);
@@ -135,9 +151,22 @@ export default function ConnectWallet({ compact }: { compact?: boolean }) {
           INSTALL THE METAMASK EXTENSION, REFRESH THE PAGE, THEN TAP CONNECT AGAIN.
         </p>
       )}
-      <p className="mt-2 font-tech text-[10px] leading-relaxed tracking-widest text-zinc-400">
-        WALLETCONNECT (QR) IS NOT SET UP YET — IT NEEDS A PROJECT ID.
-      </p>
+      {walletConnectEnabled ? (
+        <button
+          type="button"
+          onClick={() => {
+            setShowHelp(false);
+            handleWalletConnect();
+          }}
+          className="mt-3 w-full px-4 py-2 border border-green text-green font-tech text-xs tracking-widest hover:bg-darkGreen"
+        >
+          SCAN QR — WALLETCONNECT
+        </button>
+      ) : (
+        <p className="mt-2 font-tech text-[10px] leading-relaxed tracking-widest text-zinc-400">
+          WALLETCONNECT (QR) IS NOT SET UP YET — IT NEEDS A PROJECT ID.
+        </p>
+      )}
       <button
         type="button"
         onClick={() => {
@@ -212,6 +241,16 @@ export default function ConnectWallet({ compact }: { compact?: boolean }) {
       <button onClick={handleConnect} disabled={isPending} className="px-4 py-2 border border-green text-green bg-black hover:bg-darkGreen font-tech uppercase text-xs sm:text-sm tracking-wider box-aura disabled:opacity-50">
         {isPending ? "CONNECTING..." : "CONNECT WALLET"}
       </button>
+      {walletConnectEnabled && (
+        <button
+          type="button"
+          onClick={handleWalletConnect}
+          disabled={isPending}
+          className="font-tech text-[10px] tracking-widest text-zinc-400 hover:text-green disabled:opacity-50"
+        >
+          OR SCAN QR — WALLETCONNECT
+        </button>
+      )}
       {mismatch && <p className="font-tech text-[10px] text-red-500 tracking-widest text-right">{mismatch}</p>}
       {(notice || errorNotice) && <p className="font-tech text-[10px] text-red-500 tracking-widest text-right">{notice || errorNotice}</p>}
       {showHelp && help}
