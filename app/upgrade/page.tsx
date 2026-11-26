@@ -36,6 +36,21 @@ function StatBar({ label, value }: { label: string; value: number }) {
   );
 }
 
+function StatCompare({ label, from, to }: { label: string; from: number; to: number }) {
+  const delta = to - from;
+  return (
+    <div className="flex items-baseline justify-between gap-2 py-1.5 border-b border-green/10 last:border-b-0">
+      <span className="font-tech text-[10px] tracking-widest text-zinc-400">{label}</span>
+      <span className="font-tech text-xs tracking-widest text-white">
+        {from.toFixed(1)} <span className="text-zinc-500">→</span>{" "}
+        <span className="text-green">
+          {to.toFixed(1)} {delta > 0 ? `(+${delta.toFixed(1)})` : ""}
+        </span>
+      </span>
+    </div>
+  );
+}
+
 export default function UpgradePage() {
   const { address } = useAccount();
   const owned = useOwnedVials(address);
@@ -56,6 +71,8 @@ export default function UpgradePage() {
   const spec = RARITY_SPECS.find((s) => s.rarity === selected)!;
   const preview = STRAIN_PREVIEW.find((n) => n.rarity === selected);
   const step = nextTier(selected);
+  const nextSpec = step ? RARITY_SPECS.find((s) => s.rarity === step.to) : undefined;
+  const nextPreview = step ? STRAIN_PREVIEW.find((n) => n.rarity === step.to) : undefined;
 
   // Ownership of the selected vial, from the on-chain token ids.
   const ownership =
@@ -174,95 +191,90 @@ export default function UpgradePage() {
         </div>
       )}
 
-      {/* Selected vial — always on top; tapping a card below brings it here. */}
-      <div className="card-panel overflow-hidden mb-3">
-        <div className="grid sm:grid-cols-[200px_1fr]">
-          <div className="relative aspect-[2/3] sm:aspect-auto sm:min-h-[300px] border-b sm:border-b-0 sm:border-r border-green/15 bg-black">
-            <Image src={spec.image} alt={`${spec.rarity} antidote vial`} fill sizes="200px" className="object-cover" priority />
+      {/* Selected vial — compact on phones: small thumb + details beside it. */}
+      <div className="card-panel p-4 sm:p-5 mb-3">
+        <div className="flex gap-4">
+          <div className="relative w-24 sm:w-44 shrink-0 aspect-[2/3] overflow-hidden border border-green/15 bg-black">
+            <Image src={spec.image} alt={`${spec.rarity} antidote vial`} fill sizes="176px" className="object-cover" priority />
           </div>
-          <div className="p-5 sm:p-6 flex flex-col gap-4">
-            <div>
-              <div className="flex items-start justify-between gap-3">
-                <h3 className="font-bangers text-4xl text-green tracking-wide leading-none">{spec.rarity}</h3>
-                <span className="shrink-0 text-[10px] px-2 py-0.5 border border-green/40 font-tech tracking-wider text-green">
-                  {spec.supply.toLocaleString()} SUPPLY
-                </span>
-              </div>
-              <p className="mt-2 font-tech text-sm leading-relaxed text-zinc-300">{spec.line}</p>
-              <p className="mt-1 font-tech text-xs tracking-widest text-green">{spec.perk}</p>
+          <div className="flex-1 min-w-0 flex flex-col gap-2">
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="font-bangers text-3xl sm:text-4xl text-green tracking-wide leading-none">{spec.rarity}</h3>
+              <span className="shrink-0 text-[10px] px-2 py-0.5 border border-green/40 font-tech tracking-wider text-green">
+                {spec.supply.toLocaleString()}
+              </span>
             </div>
-
-            <div className="grid grid-cols-3 gap-3 border-y border-green/15 py-3">
-              <div>
-                <p className="font-tech text-[10px] tracking-widest text-zinc-400">SUPPLY</p>
-                <p className="mt-1 font-bangers text-2xl text-green leading-none">{spec.supply.toLocaleString()}</p>
-              </div>
-              <div>
-                <p className="font-tech text-[10px] tracking-widest text-zinc-400">TOKEN RANGE</p>
-                <p className="mt-1 font-tech text-sm text-white">{spec.range}</p>
-              </div>
-              <div>
-                <p className="font-tech text-[10px] tracking-widest text-zinc-400">DOSE</p>
-                <p className="mt-1 font-tech text-sm text-white">{spec.dose}</p>
-              </div>
-            </div>
-
-            {preview && (
-              <div className="flex flex-col gap-3">
-                <StatBar label="PURITY" value={preview.purity} />
-                <StatBar label="STABILITY" value={preview.stability} />
-                <StatBar label="POTENCY" value={preview.potency} />
+            <p className="font-tech text-xs sm:text-sm leading-relaxed text-zinc-300">{spec.line}</p>
+            <p className="font-tech text-[11px] tracking-widest text-green">{spec.perk}</p>
+            <p className={`font-tech text-[11px] tracking-widest ${held.length > 0 ? "text-green" : "text-zinc-300"}`}>
+              {ownership}
+              {held.length > 0 ? ` — ${held.length} VIAL${held.length > 1 ? "S" : ""}` : ""}
+            </p>
+            {held.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {held.map((id) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setSelectedToken(id)}
+                    className={`px-3 py-1.5 border font-tech text-[11px] tracking-widest ${
+                      tokenId === id ? "bg-green text-black border-green" : "border-green/30 text-green hover:bg-darkGreen"
+                    }`}
+                  >
+                    TOKEN #{id}
+                  </button>
+                ))}
               </div>
             )}
-
-            <div>
-              <p className={`font-tech text-[11px] tracking-widest ${held.length > 0 ? "text-green" : "text-zinc-300"}`}>
-                {ownership}
-                {held.length > 0 ? ` — ${held.length} VIAL${held.length > 1 ? "S" : ""}` : ""}
+            {owned.status === "not-minted" && (
+              <p className="font-tech text-[10px] tracking-widest text-zinc-400">
+                OWNERSHIP IS CHECKED ON-CHAIN AS SOON AS THE CONTRACT EXISTS
               </p>
-              {held.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {held.map((id) => (
-                    <button
-                      key={id}
-                      type="button"
-                      onClick={() => setSelectedToken(id)}
-                      className={`px-3 py-2 border font-tech text-[11px] tracking-widest ${
-                        tokenId === id ? "bg-green text-black border-green" : "border-green/30 text-green hover:bg-darkGreen"
-                      }`}
-                    >
-                      TOKEN #{id}
-                    </button>
-                  ))}
-                </div>
-              )}
-              {owned.status === "not-minted" && (
-                <p className="mt-2 font-tech text-[10px] tracking-widest text-zinc-400">
-                  OWNERSHIP IS CHECKED ON-CHAIN AS SOON AS THE CONTRACT EXISTS
-                </p>
-              )}
-              {held.length === 0 && owned.status === "live" && (
-                <a
-                  href={OPENSEA_MINT}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-block mt-3 px-5 py-2.5 border border-green text-green font-tech text-[11px] tracking-widest hover:bg-darkGreen"
-                >
-                  MINT ON OPENSEA
-                </a>
-              )}
-            </div>
-
-            <p className="font-tech text-[9px] tracking-widest text-zinc-500">STRAIN PREVIEW — ILLUSTRATIVE STATS ONLY. REAL STATS COME AFTER MINT.</p>
+            )}
+            {held.length === 0 && owned.status === "live" && (
+              <a
+                href={OPENSEA_MINT}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-block self-start mt-1 px-4 py-2 border border-green text-green font-tech text-[11px] tracking-widest hover:bg-darkGreen"
+              >
+                MINT ON OPENSEA
+              </a>
+            )}
           </div>
         </div>
+
+        <div className="grid grid-cols-3 gap-3 border-y border-green/15 py-3 mt-4">
+          <div>
+            <p className="font-tech text-[10px] tracking-widest text-zinc-400">SUPPLY</p>
+            <p className="mt-1 font-bangers text-2xl text-green leading-none">{spec.supply.toLocaleString()}</p>
+          </div>
+          <div>
+            <p className="font-tech text-[10px] tracking-widest text-zinc-400">TOKEN RANGE</p>
+            <p className="mt-1 font-tech text-sm text-white">{spec.range}</p>
+          </div>
+          <div>
+            <p className="font-tech text-[10px] tracking-widest text-zinc-400">DOSE</p>
+            <p className="mt-1 font-tech text-sm text-white">{spec.dose}</p>
+          </div>
+        </div>
+
+        {preview && (
+          <div className="flex flex-col gap-3 mt-4">
+            <StatBar label="PURITY" value={preview.purity} />
+            <StatBar label="STABILITY" value={preview.stability} />
+            <StatBar label="POTENCY" value={preview.potency} />
+          </div>
+        )}
+
+        <p className="mt-3 font-tech text-[9px] tracking-widest text-zinc-500">STRAIN PREVIEW — ILLUSTRATIVE STATS ONLY. REAL STATS COME AFTER MINT.</p>
       </div>
 
       {/* Upgrade ladder for the selected vial. */}
       <PanelCard title="UPGRADE" className="mb-3">
-        <div className="flex flex-wrap items-center gap-1.5 mb-4">
+        <div className="flex gap-1.5 overflow-x-auto pb-1 mb-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {UPGRADE_PATH.map((s, i) => (
-            <span key={s.from} className="flex items-center gap-1.5">
+            <span key={s.from} className="flex items-center gap-1.5 shrink-0">
               <span
                 className={`px-2 py-1 border font-tech text-[10px] tracking-widest ${
                   s.from === selected ? "bg-green text-black border-green" : "border-green/25 text-zinc-300"
@@ -284,7 +296,7 @@ export default function UpgradePage() {
           ))}
         </div>
 
-        {step ? (
+        {step && nextSpec ? (
           <>
             <p className="font-bangers text-3xl text-green tracking-wide leading-none">
               {step.from} → {step.to}
@@ -292,6 +304,37 @@ export default function UpgradePage() {
             <p className="mt-2 font-tech text-[11px] tracking-widest text-zinc-400">
               ONE TIER UP. THE UPGRADED VIAL KEEPS ITS TOKEN ID.
             </p>
+
+            {/* Upgrade preview: what the vial becomes, side by side. */}
+            <div className="mt-4 border border-green/20 p-4">
+              <p className="font-tech text-[10px] tracking-widest text-zinc-400 mb-3">UPGRADE PREVIEW — WHAT IT BECOMES</p>
+              <div className="flex items-center justify-center gap-3 sm:gap-5">
+                <div className="text-center">
+                  <div className="relative w-16 sm:w-20 aspect-[2/3] mx-auto overflow-hidden border border-green/20">
+                    <Image src={spec.image} alt={`${spec.rarity} vial now`} fill sizes="80px" className="object-cover" />
+                  </div>
+                  <p className="mt-1.5 font-tech text-[9px] tracking-widest text-zinc-400">{spec.rarity} — NOW</p>
+                </div>
+                <span className="font-bangers text-3xl text-green leading-none">→</span>
+                <div className="text-center">
+                  <div className="relative w-16 sm:w-20 aspect-[2/3] mx-auto overflow-hidden border border-green">
+                    <Image src={nextSpec.image} alt={`${nextSpec.rarity} vial after upgrade`} fill sizes="80px" className="object-cover" />
+                  </div>
+                  <p className="mt-1.5 font-tech text-[9px] tracking-widest text-green">{nextSpec.rarity} — AFTER UPGRADE</p>
+                </div>
+              </div>
+              {preview && nextPreview && (
+                <div className="mt-3">
+                  <StatCompare label="PURITY" from={preview.purity} to={nextPreview.purity} />
+                  <StatCompare label="STABILITY" from={preview.stability} to={nextPreview.stability} />
+                  <StatCompare label="POTENCY" from={preview.potency} to={nextPreview.potency} />
+                </div>
+              )}
+              <p className="mt-2 font-tech text-[9px] tracking-widest text-zinc-500 text-center">
+                PREVIEW ONLY — REAL UPGRADED STATS COME FROM THE CONTRACT.
+              </p>
+            </div>
+
             <div className="mt-4 border border-green/20 divide-y divide-green/10">
               <div className="flex items-baseline justify-between gap-3 px-4 py-3">
                 <span className="font-tech text-[11px] tracking-widest text-white">COST — $PLAGUES</span>
@@ -336,10 +379,10 @@ export default function UpgradePage() {
         )}
       </PanelCard>
 
-      {/* Choose a vial — tapping one shows it at the top. */}
-      <PanelCard title="CHOOSE A VIAL" className="mb-3">
+      {/* Choose a vial — small strip, right below Upgrade. */}
+      <PanelCard title="CHOOSE A VIAL" compact className="mb-3">
         <p className="font-tech text-[10px] tracking-widest text-zinc-400 mb-3">TAP A VIAL — IT APPEARS AT THE TOP WITH ITS UPGRADE PATH.</p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-5 gap-2">
           {RARITY_SPECS.map((s) => {
             const n = ownedByRarity[s.rarity]?.length ?? 0;
             const badge =
@@ -355,13 +398,12 @@ export default function UpgradePage() {
                 aria-label={`${s.rarity} vial, select for upgrade`}
               >
                 <div className="relative aspect-[2/3]">
-                  <Image src={s.image} alt={`${s.rarity} antidote vial`} fill sizes="(max-width: 768px) 50vw, 20vw" className="object-cover" />
+                  <Image src={s.image} alt={`${s.rarity} antidote vial`} fill sizes="15vw" className="object-cover" />
                 </div>
-                <div className="p-2 flex items-center justify-between gap-2">
-                  <span className="font-tech text-[10px] tracking-widest text-green">{s.rarity}</span>
-                  <span className="font-tech text-[10px] tracking-widest text-zinc-300">{s.supply.toLocaleString()}</span>
-                </div>
-                <p className={`px-2 pb-2 font-tech text-[9px] tracking-widest ${n > 0 ? "text-green" : "text-zinc-400"}`}>{badge}</p>
+                <p className="px-1 pt-1 font-tech text-[8px] sm:text-[10px] tracking-widest text-green text-center truncate">{s.rarity}</p>
+                <p className={`px-1 pb-1.5 font-tech text-[8px] tracking-widest text-center truncate ${n > 0 ? "text-green" : "text-zinc-400"}`}>
+                  {badge}
+                </p>
               </button>
             );
           })}
