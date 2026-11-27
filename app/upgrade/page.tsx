@@ -6,10 +6,19 @@ import Link from "next/link";
 import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import SectionTitle from "@/components/SectionTitle";
 import PanelCard from "@/components/PanelCard";
+import VialPreview from "@/components/VialPreview";
 import { OPENSEA_MINT, RARITY_SPECS } from "@/lib/protocol";
 import { STRAIN_PREVIEW } from "@/lib/mockData";
 import { useOwnedVials } from "@/lib/useOwnedVials";
-import { UPGRADE_PATH, groupOwnedByRarity, nextTier } from "@/lib/upgrade-path";
+import {
+  STAT_INDEX,
+  STAT_UPGRADE_COST,
+  UPGRADE_STATS,
+  groupOwnedByRarity,
+  rarityScore,
+  statValue,
+  type UpgradeStatId,
+} from "@/lib/upgrade-path";
 import {
   LAB_ABI,
   LAB_CONTRACT_ADDRESS,
@@ -18,6 +27,7 @@ import {
   isPlaguesConfigured,
   readPlaguesBalance,
 } from "@/lib/lab-contracts";
+import type { VialStats } from "@/lib/vial-layers";
 import { getXSession } from "@/lib/x-session";
 import { loadPlayer } from "@/lib/points";
 import type { Rarity } from "@/lib/types";
@@ -56,6 +66,7 @@ export default function UpgradePage() {
   const owned = useOwnedVials(address);
   const [selected, setSelected] = useState<Rarity>("COMMON");
   const [selectedToken, setSelectedToken] = useState<number | null>(null);
+  const [selectedStat, setSelectedStat] = useState<UpgradeStatId>("purity");
   const [lastAction, setLastAction] = useState<"UPGRADE" | "EXTRACT" | null>(null);
   const [plagues, setPlagues] = useState<number | null>(null);
   const [points, setPoints] = useState<number | null>(null);
@@ -70,9 +81,21 @@ export default function UpgradePage() {
 
   const spec = RARITY_SPECS.find((s) => s.rarity === selected)!;
   const preview = STRAIN_PREVIEW.find((n) => n.rarity === selected);
-  const step = nextTier(selected);
-  const nextSpec = step ? RARITY_SPECS.find((s) => s.rarity === step.to) : undefined;
-  const nextPreview = step ? STRAIN_PREVIEW.find((n) => n.rarity === step.to) : undefined;
+
+  // Current (illustrative) stats of the selected vial, and what they become
+  // after one level up on the selected stat. The tier never changes — the
+  // rarity score climbs inside it.
+  const baseStats: VialStats = preview
+    ? { purity: preview.purity, stability: preview.stability, potency: preview.potency }
+    : { purity: 0, stability: 0, potency: 0 };
+  const afterStats: VialStats = {
+    ...baseStats,
+    [selectedStat]: statValue(baseStats[selectedStat], 1),
+  };
+  const baseScore = rarityScore(baseStats);
+  const afterScore = rarityScore(afterStats);
+  const maxed = afterStats[selectedStat] === baseStats[selectedStat];
+  const selectedStatDef = UPGRADE_STATS.find((s) => s.id === selectedStat)!;
 
   // Ownership of the selected vial, from the on-chain token ids.
   const ownership =
@@ -121,12 +144,12 @@ export default function UpgradePage() {
   // Reason order matters: the contract not existing is the blocker for
   // everyone (nobody owns anything yet); "YOU DON'T HAVE THIS VIAL" only
   // applies once the collection is live and the wallet holds none.
-  const upgradeDisabledReason = !step
-    ? "MAX TIER — ALREADY MYTHIC"
-    : !labReady
-      ? "SEALED — LAB CONTRACT NOT DEPLOYED"
-      : held.length === 0
-        ? "YOU DON'T HAVE THIS VIAL"
+  const upgradeDisabledReason = !labReady
+    ? "SEALED — LAB CONTRACT NOT DEPLOYED"
+    : held.length === 0
+      ? "YOU DON'T HAVE THIS VIAL"
+      : maxed
+        ? "MAXED — ALREADY 100"
         : isPending || isConfirming
           ? "TRANSACTION PENDING…"
           : null;
@@ -140,13 +163,13 @@ export default function UpgradePage() {
         : null;
 
   const doUpgrade = () => {
-    if (!step || !tokenId || !labReady) return;
+    if (!tokenId || !labReady || maxed) return;
     setLastAction("UPGRADE");
     writeContract({
       address: LAB_CONTRACT_ADDRESS as `0x${string}`,
       abi: LAB_ABI,
       functionName: "upgrade",
-      args: [BigInt(tokenId)],
+      args: [BigInt(tokenId), STAT_INDEX[selectedStat]],
     });
   };
 
@@ -163,7 +186,7 @@ export default function UpgradePage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-12 pb-24">
-      <SectionTitle title="LAB" subtitle="UPGRADE VIALS ON-CHAIN — COMMON TO MYTHIC, PAID IN $PLAGUES + POINTS" />
+      <SectionTitle title="LAB" subtitle="UPGRADE VIALS ON-CHAIN — RAISE RARITY, PAID IN $PLAGUES + POINTS" />
 
       {(hash || error) && (
         <div className="card-panel p-4 mb-4">
@@ -270,118 +293,110 @@ export default function UpgradePage() {
         <p className="mt-3 font-tech text-[9px] tracking-widest text-zinc-500">STRAIN PREVIEW — ILLUSTRATIVE STATS ONLY. REAL STATS COME AFTER MINT.</p>
       </div>
 
-      {/* Upgrade ladder for the selected vial. */}
+      {/* Upgrade one stat by one level. The tier never changes — the rarity score climbs inside it. */}
       <PanelCard title="UPGRADE" className="mb-3">
-        <div className="flex gap-1.5 overflow-x-auto pb-1 mb-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {UPGRADE_PATH.map((s, i) => (
-            <span key={s.from} className="flex items-center gap-1.5 shrink-0">
-              <span
-                className={`px-2 py-1 border font-tech text-[10px] tracking-widest ${
-                  s.from === selected ? "bg-green text-black border-green" : "border-green/25 text-zinc-300"
+        <p className="font-tech text-[11px] tracking-widest text-zinc-400 mb-3">
+          PICK A STAT — ONE LEVEL UP (+5, CAPPED AT 100). THE TIER NEVER CHANGES; THE RARITY SCORE CLIMBS INSIDE IT.
+        </p>
+
+        <div className="grid grid-cols-3 gap-2 mb-3">
+          {UPGRADE_STATS.map((s) => {
+            const value = baseStats[s.id];
+            const gain = statValue(value, 1) - value;
+            const active = selectedStat === s.id;
+            return (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => setSelectedStat(s.id)}
+                className={`border p-3 text-left ${
+                  active ? "border-green bg-darkGreen" : "border-green/20 hover:border-green/50"
                 }`}
+                aria-label={`Upgrade ${s.label}`}
               >
-                {s.from}
-              </span>
-              <span className="font-tech text-[10px] text-zinc-500">→</span>
-              {i === UPGRADE_PATH.length - 1 && (
-                <span
-                  className={`px-2 py-1 border font-tech text-[10px] tracking-widest ${
-                    selected === "MYTHIC" ? "bg-green text-black border-green" : "border-green/25 text-zinc-300"
-                  }`}
-                >
-                  MYTHIC
-                </span>
-              )}
-            </span>
-          ))}
+                <p className="font-tech text-[10px] tracking-widest text-zinc-400">{s.label}</p>
+                <p className="mt-1 font-bangers text-2xl text-green leading-none">{value.toFixed(1)}</p>
+                <p className="mt-1 font-tech text-[9px] tracking-widest text-zinc-500">
+                  {gain > 0 ? `LV 0 → LV 1 · +${gain.toFixed(1)}` : "MAXED — 100"}
+                </p>
+              </button>
+            );
+          })}
+        </div>
+        <p className="font-tech text-[11px] tracking-widest text-zinc-400">{selectedStatDef.blurb}</p>
+
+        {/* Upgrade preview: the layered image, now vs after, rendered live. */}
+        <div className="mt-4 border border-green/20 p-4">
+          <p className="font-tech text-[10px] tracking-widest text-zinc-400 mb-3">UPGRADE PREVIEW — WHAT IT BECOMES</p>
+          <div className="flex items-center justify-center gap-3 sm:gap-5">
+            <div className="text-center">
+              <div className="relative w-16 sm:w-20 aspect-[2/3] mx-auto overflow-hidden border border-green/20 bg-black">
+                <VialPreview rarity={selected} stats={baseStats} className="h-full w-full object-cover" label={`${spec.rarity} vial now`} />
+              </div>
+              <p className="mt-1.5 font-tech text-[9px] tracking-widest text-zinc-400">{spec.rarity} — NOW</p>
+            </div>
+            <span className="font-bangers text-3xl text-green leading-none">→</span>
+            <div className="text-center">
+              <div className="relative w-16 sm:w-20 aspect-[2/3] mx-auto overflow-hidden border border-green bg-black">
+                <VialPreview rarity={selected} stats={afterStats} className="h-full w-full object-cover" label={`${spec.rarity} vial after upgrade`} />
+              </div>
+              <p className="mt-1.5 font-tech text-[9px] tracking-widest text-green">{spec.rarity} — AFTER UPGRADE</p>
+            </div>
+          </div>
+          <div className="mt-3">
+            <StatCompare label="RARITY SCORE" from={baseScore} to={afterScore} />
+            <StatCompare label="PURITY" from={baseStats.purity} to={afterStats.purity} />
+            <StatCompare label="STABILITY" from={baseStats.stability} to={afterStats.stability} />
+            <StatCompare label="POTENCY" from={baseStats.potency} to={afterStats.potency} />
+          </div>
+          <p className="mt-2 font-tech text-[9px] tracking-widest text-zinc-500 text-center">
+            PREVIEW ONLY — REAL UPGRADED STATS COME FROM THE CONTRACT.
+          </p>
         </div>
 
-        {step && nextSpec ? (
-          <>
-            <p className="font-bangers text-3xl text-green tracking-wide leading-none">
-              {step.from} → {step.to}
-            </p>
-            <p className="mt-2 font-tech text-[11px] tracking-widest text-zinc-400">
-              ONE TIER UP. THE UPGRADED VIAL KEEPS ITS TOKEN ID.
-            </p>
-
-            {/* Upgrade preview: what the vial becomes, side by side. */}
-            <div className="mt-4 border border-green/20 p-4">
-              <p className="font-tech text-[10px] tracking-widest text-zinc-400 mb-3">UPGRADE PREVIEW — WHAT IT BECOMES</p>
-              <div className="flex items-center justify-center gap-3 sm:gap-5">
-                <div className="text-center">
-                  <div className="relative w-16 sm:w-20 aspect-[2/3] mx-auto overflow-hidden border border-green/20">
-                    <Image src={spec.image} alt={`${spec.rarity} vial now`} fill sizes="80px" className="object-cover" />
-                  </div>
-                  <p className="mt-1.5 font-tech text-[9px] tracking-widest text-zinc-400">{spec.rarity} — NOW</p>
-                </div>
-                <span className="font-bangers text-3xl text-green leading-none">→</span>
-                <div className="text-center">
-                  <div className="relative w-16 sm:w-20 aspect-[2/3] mx-auto overflow-hidden border border-green">
-                    <Image src={nextSpec.image} alt={`${nextSpec.rarity} vial after upgrade`} fill sizes="80px" className="object-cover" />
-                  </div>
-                  <p className="mt-1.5 font-tech text-[9px] tracking-widest text-green">{nextSpec.rarity} — AFTER UPGRADE</p>
-                </div>
-              </div>
-              {preview && nextPreview && (
-                <div className="mt-3">
-                  <StatCompare label="PURITY" from={preview.purity} to={nextPreview.purity} />
-                  <StatCompare label="STABILITY" from={preview.stability} to={nextPreview.stability} />
-                  <StatCompare label="POTENCY" from={preview.potency} to={nextPreview.potency} />
-                </div>
-              )}
-              <p className="mt-2 font-tech text-[9px] tracking-widest text-zinc-500 text-center">
-                PREVIEW ONLY — REAL UPGRADED STATS COME FROM THE CONTRACT.
-              </p>
-            </div>
-
-            <div className="mt-4 border border-green/20 divide-y divide-green/10">
-              <div className="flex items-baseline justify-between gap-3 px-4 py-3">
-                <span className="font-tech text-[11px] tracking-widest text-white">COST — $PLAGUES</span>
-                <span className="font-tech text-[11px] tracking-widest text-zinc-400">
-                  {step.plaguesCost !== null ? step.plaguesCost.toLocaleString() : "TBA — SET BY THE LAB CONTRACT"}
-                </span>
-              </div>
-              <div className="flex items-baseline justify-between gap-3 px-4 py-3">
-                <span className="font-tech text-[11px] tracking-widest text-white">COST — POINTS</span>
-                <span className="font-tech text-[11px] tracking-widest text-zinc-400">
-                  {step.pointsCost !== null ? step.pointsCost.toLocaleString() : "TBA — SET BY THE LAB CONTRACT"}
-                </span>
-              </div>
-              <div className="flex items-baseline justify-between gap-3 px-4 py-3">
-                <span className="font-tech text-[11px] tracking-widest text-white">YOUR BALANCE</span>
-                <span className="font-tech text-[11px] tracking-widest text-green">
-                  {plaguesShown !== null ? `${plaguesShown.toLocaleString(undefined, { maximumFractionDigits: 2 })} $PLAGUES` : "— $PLAGUES"}
-                  {" · "}
-                  {points !== null ? `${points} PTS` : "— PTS"}
-                </span>
-              </div>
-            </div>
-            <button
-              type="button"
-              disabled={Boolean(upgradeDisabledReason)}
-              onClick={doUpgrade}
-              className="mt-4 w-full py-4 font-tech tracking-[0.2em] uppercase bg-green text-black hover:bg-green-bright disabled:bg-green/30 disabled:text-black/60 disabled:cursor-not-allowed"
-            >
-              {upgradeDisabledReason || `UPGRADE TO ${step.to}`}
-            </button>
-            {points === null && (
-              <p className="mt-2 font-tech text-[10px] tracking-widest text-zinc-400 text-center">
-                <Link href="/task" className="text-green hover:text-green-bright underline underline-offset-4 decoration-green/40">
-                  EARN POINTS ON TASK
-                </Link>{" "}
-                — THEY PAY FOR UPGRADES.
-              </p>
-            )}
-          </>
-        ) : (
-          <p className="font-bangers text-3xl text-green tracking-wide leading-none">MAX TIER — ALREADY MYTHIC</p>
+        <div className="mt-4 border border-green/20 divide-y divide-green/10">
+          <div className="flex items-baseline justify-between gap-3 px-4 py-3">
+            <span className="font-tech text-[11px] tracking-widest text-white">COST — $PLAGUES</span>
+            <span className="font-tech text-[11px] tracking-widest text-zinc-400">
+              {STAT_UPGRADE_COST.plaguesCost !== null ? STAT_UPGRADE_COST.plaguesCost.toLocaleString() : "TBA — SET BY THE LAB CONTRACT"}
+            </span>
+          </div>
+          <div className="flex items-baseline justify-between gap-3 px-4 py-3">
+            <span className="font-tech text-[11px] tracking-widest text-white">COST — POINTS</span>
+            <span className="font-tech text-[11px] tracking-widest text-zinc-400">
+              {STAT_UPGRADE_COST.pointsCost !== null ? STAT_UPGRADE_COST.pointsCost.toLocaleString() : "TBA — SET BY THE LAB CONTRACT"}
+            </span>
+          </div>
+          <div className="flex items-baseline justify-between gap-3 px-4 py-3">
+            <span className="font-tech text-[11px] tracking-widest text-white">YOUR BALANCE</span>
+            <span className="font-tech text-[11px] tracking-widest text-green">
+              {plaguesShown !== null ? `${plaguesShown.toLocaleString(undefined, { maximumFractionDigits: 2 })} $PLAGUES` : "— $PLAGUES"}
+              {" · "}
+              {points !== null ? `${points} PTS` : "— PTS"}
+            </span>
+          </div>
+        </div>
+        <button
+          type="button"
+          disabled={Boolean(upgradeDisabledReason)}
+          onClick={doUpgrade}
+          className="mt-4 w-full py-4 font-tech tracking-[0.2em] uppercase bg-green text-black hover:bg-green-bright disabled:bg-green/30 disabled:text-black/60 disabled:cursor-not-allowed"
+        >
+          {upgradeDisabledReason || `UPGRADE ${selectedStatDef.label} +1 LEVEL`}
+        </button>
+        {points === null && (
+          <p className="mt-2 font-tech text-[10px] tracking-widest text-zinc-400 text-center">
+            <Link href="/task" className="text-green hover:text-green-bright underline underline-offset-4 decoration-green/40">
+              EARN POINTS ON TASK
+            </Link>{" "}
+            — THEY PAY FOR UPGRADES.
+          </p>
         )}
       </PanelCard>
 
       {/* Choose a vial — small strip, right below Upgrade. */}
       <PanelCard title="CHOOSE A VIAL" compact className="mb-3">
-        <p className="font-tech text-[10px] tracking-widest text-zinc-400 mb-3">TAP A VIAL — IT APPEARS AT THE TOP WITH ITS UPGRADE PATH.</p>
+        <p className="font-tech text-[10px] tracking-widest text-zinc-400 mb-3">TAP A VIAL — IT APPEARS AT THE TOP WITH ITS RARITY.</p>
         <div className="grid grid-cols-5 gap-2">
           {RARITY_SPECS.map((s) => {
             const n = ownedByRarity[s.rarity]?.length ?? 0;

@@ -143,24 +143,31 @@ returns the stored total and ignores any client-sent points, and
 
 ## Lab (on-chain upgrade, prepared)
 
-The Lab upgrades a held vial one tier at a time — COMMON → RARE → EPIC →
-LEGENDARY → MYTHIC — paid in $PLAGUES + waitlist points. That is the
-ecosystem loop: extract $PLAGUES from a vial you own, earn points on Task,
-spend both to climb a tier. The upgrade ladder lives in
-`lib/upgrade-path.ts`; costs are null (shown as TBA) until the Lab contract
-sets them — the UI never invents a number.
+The Lab raises a held vial's RARITY — its three stats (purity, stability,
+potency), one level at a time, inside its own tier. The tier never
+changes: it is fixed at mint by the token id range. A Common stays Common,
+but it can become the rarest Common — that is what OpenSea's rarity
+ranking reads. The model lives in `lib/upgrade-path.ts` (one level = +5,
+capped at 100, max 5 levels per stat; rarity score = the sum of the three
+stats); costs are null (shown as TBA) until the Lab contract sets them —
+the UI never invents a number.
 
-Tap any vial in the gallery and it appears at the top with its upgrade
-path. Ownership is read on-chain: owned token ids map to rarities through
-the fixed token ranges (`lib/protocol.ts` min/max), so a vial the wallet
-does not hold shows YOU DON'T HAVE THIS VIAL. There is no manual token-id
-input — selection is always by tapping a vial.
+The vial picture follows the stats: the image is the rarity base plus
+three overlays (murk, cracks, glow — see `lib/vial-layers.ts` and
+`assets/nft/layers/LAYERS.md`), composited live on a canvas by
+`components/VialPreview.tsx`, so the preview shows what the vial becomes
+after the upgrade. Tap any vial in the gallery and it appears at the top
+with its rarity. Ownership is read on-chain: owned token ids map to
+rarities through the fixed token ranges (`lib/protocol.ts` min/max), so a
+vial the wallet does not hold shows YOU DON'T HAVE THIS VIAL. There is no
+manual token-id input — selection is always by tapping a vial.
 
 Both actions are real wagmi writes (`useWriteContract` +
 `useWaitForTransactionReceipt`, hash linked to Blockscout) — but they are
 gated on the contracts existing:
 
-- `NEXT_PUBLIC_LAB_CONTRACT` — the Lab operator (`upgrade(uint256)`,
+- `NEXT_PUBLIC_LAB_CONTRACT` — the Lab operator (`upgrade(uint256,
+  uint8)` — stat 0 = purity, 1 = stability, 2 = potency,
   `extract(uint256)`). While unset, both buttons are sealed.
 - `NEXT_PUBLIC_PLAGUES_TOKEN` — the $PLAGUES ERC-20, balance read only.
 - `NEXT_PUBLIC_VIAL_CONTRACT` — the vial ERC-721; the selector reads owned
@@ -179,7 +186,7 @@ app/
   inventory/page.tsx       Held vials (on-chain ownership check)
   task/page.tsx            Tasks + referral + points + history + leaderboard
   profile/page.tsx         Lab ID + account + OpenSea window
-  upgrade/page.tsx         Lab: Extract + Mutate operations
+  upgrade/page.tsx         Lab: Extract + Upgrade operations
   api/waitlist/route.ts    Allowlist + uniqueness + referral record
   api/rank/route.ts        Leaderboard + totals + read-only points lookup
   api/profile/route.ts     Profile read + wallet linking (no points)
@@ -196,6 +203,7 @@ components/
   EnterLabButton.tsx       Modal trigger
   LabGateModal.tsx         Waitlist vs already-joined card
   AntidoteCard.tsx         Strain briefing cards
+  VialPreview.tsx          Layered vial image (canvas composite)
 lib/
   protocol.ts              Phases, rarities, mint class
   config.ts                Robinhood chain
@@ -207,7 +215,8 @@ lib/
   point-events.ts          Point ledger (record / list)
   vial-contract.ts         Vial contract + on-chain balanceOf + token ids
   lab-contracts.ts         Lab + $PLAGUES contracts, draft ABI, guards
-  upgrade-path.ts          Upgrade ladder + token-id to rarity mapping
+  upgrade-path.ts          Per-stat rarity upgrade model + token-id to rarity mapping
+  vial-layers.ts           Layer overlays + opacity curves for the vial image
   useOwnedVials.ts         Owned-vial hook for Inventory / Lab
   nhost.ts                 Public GraphQL URL
   nhost-server.ts          Admin-secret fetch
