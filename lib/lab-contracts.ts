@@ -17,7 +17,9 @@ import { robinhoodChain } from "./config";
  * prepared interface for the Lab contract. They MUST match the deployed
  * contract; if the real contract names a function differently (e.g. a
  * different upgrade signature), update this file before the buttons go
- * live, or the calls will revert. Upgrade costs ($PLAGUES + points) are
+ * live, or the calls will revert. upgrade(tokenId, stat) raises ONE stat
+ * by one level: stat 0 = purity, 1 = stability, 2 = potency (see
+ * lib/upgrade-path.ts STAT_INDEX). Upgrade costs ($PLAGUES + points) are
  * set by the contract, not by the UI — see lib/upgrade-path.ts.
  */
 export const LAB_CONTRACT_ADDRESS = (process.env.NEXT_PUBLIC_LAB_CONTRACT || "").trim();
@@ -40,7 +42,10 @@ export const LAB_ABI = [
     type: "function",
     name: "upgrade",
     stateMutability: "nonpayable",
-    inputs: [{ name: "tokenId", type: "uint256" }],
+    inputs: [
+      { name: "tokenId", type: "uint256" },
+      { name: "stat", type: "uint8" },
+    ],
     outputs: [],
   },
   {

@@ -40,7 +40,7 @@ export const PHASES: Phase[] = [
     code: "MUTATION",
     status: "LOCKED",
     title: "LAB",
-    blurb: "Hold a vial, then upgrade it here — Common to Mythic, paid in $PLAGUES + points. Contracts are not live.",
+    blurb: "Hold a vial, then raise its rarity here — purity, stability and potency, paid in $PLAGUES + points. Contracts are not live.",
   },
   {
     id: 4,

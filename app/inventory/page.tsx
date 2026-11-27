@@ -144,7 +144,7 @@ export default function InventoryPage() {
             },
             {
               title: "UPGRADE",
-              body: "Lab upgrades a held vial one tier up — Common to Mythic, paid in $PLAGUES + points. No upgrade path is live yet — see the Lab.",
+              body: "Lab raises a held vial's rarity — purity, stability and potency, paid in $PLAGUES + points. No upgrade is live yet — see the Lab.",
             },
           ].map((item) => (
             <PanelCard key={item.title} title={item.title}>
